@@ -1,0 +1,205 @@
+\documentclass[english]{article}
+\usepackage[T1]{fontenc}
+\usepackage[latin9]{inputenc}
+\usepackage{babel}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage[left=0.5in,right=0.5in,top=0.8in,bottom=0.5in,footskip=.25in]{geometry}
+\usepackage{ocr}
+\usepackage{color}
+\usepackage{bm}
+\usepackage{booktabs}
+\usepackage{amsmath}
+%\usepackage{mathabx}
+\usepackage{amssymb}
+\usepackage[usenames,dvipsnames]{xcolor}
+\usepackage{tikz}
+\usepackage{titling}
+\usepackage{listings} 
+\usepackage{forest}
+\usepackage{caption}
+\usepackage{longtable}
+\usepackage{enumitem}
+\usepackage{courier}
+\lstset{% 
+   language=Matlab, 
+   basicstyle=\small\ttfamily, 
+} 
+
+\newcommand{\rou}[1]{\ocrfamily\small{\textbf{\textcolor{red}{#1}}}\normalfont\normalsize}
+\newcommand{\var}[1]{\ocrfamily\small{\textbf{\textcolor{gray}{#1}}}\normalfont\normalsize}
+\newcommand{\refline}[1]{(\protect\tikz{\protect\fill[white] (0,-0.3em) rectangle (1.8em,0.3em);\protect\draw[#1] (0,0) -- (1.8em,0);})}
+\newsavebox\CBox
+\def\textBF#1{\sbox\CBox{#1}\resizebox{\wd\CBox}{\ht\CBox}{\textbf{#1}}}
+\title{MATH 240: Discrete Structures 1 Assignment \#1}
+\author{Monorina Mukhopadhyay (ID: 260364335)}
+\begin{document}
+\pgfkeys{/forest,
+    tria/.append style={ellipse, draw},
+  }
+\maketitle
+\section*{Problem 1}
+\begin{enumerate} [label=\alph*]
+\item Truth Table
+\begin{table} [!h]
+    \begin{tabular}{|l|l|l|l|l|l|}
+        \hline
+        P & Q & $\lnot P$ & $\lnot P \lor Q$ & $P \implies Q $ & $(P \implies Q ) \iff (\lnot P \lor Q)$ \\ \hline
+        T & T & F         & T                & T               & T                                      \\ 
+        T & F & F         & F                & F               & T                                      \\ 
+        F & T & T         & T                & T               & T                                      \\ 
+        F & F & T         & T                & T               & T                                      \\
+        \hline
+    \end{tabular}
+\end{table}
+
+This is a tautology
+\item Truth Table
+\begin{table} [!h]
+    \begin{tabular}{|l|l|l|l|l|l|l|l|}
+        \hline
+        P & Q & $\lnot P$ & $\lnot Q$ & $\lnot P \land \lnot Q$ & $\lnot (\lnot P \land \lnot Q)$ & $ P \lor Q$ & $\lnot (\lnot P \land \lnot Q)\iff P \lor Q$ \\ \hline
+        T & T & F         & F         & F                       & T                               & T           & T                                            \\ 
+        T & F & F         & T         & F                       & T                               & T           & T                                            \\ 
+        F & T & T         & F         & F                       & T                               & T           & T                                            \\ 
+        F & F & T         & T         & T                       & F                               & F           & T                                            \\
+        \hline
+    \end{tabular}
+\end{table}
+This is a tautology
+\item Truth Table
+\begin{table} [!h]
+    \begin{tabular}{|l|l|l|l|l|l|l|l|l|}
+        \hline
+        P & Q & $\lnot P$ & $\lnot Q$ & $P \iff Q$ & $ P \land Q $ & $ \lnot P \land \lnot Q$ & $(( P \land Q ) \lor (\lnot P \land \lnot Q))$ & $ (P \iff Q ) \iff (( P \land Q ) \lor (\lnot P \land \lnot Q)) $ \\ \hline
+        T & T & F         & F         & T          & T             & F                        & T                                              & T                                                                 \\ 
+        T & F & F         & T         & F          & F             & F                        & F                                              & T                                                                 \\ 
+        F & T & T         & F         & F          & F             & F                        & F                                              & T                                                                 \\ 
+        F & F & T         & T         & T          & F             & T                        & T                                              & T                                                                 \\
+        \hline
+    \end{tabular}
+\end{table}
+This is a tautology
+\item This is a tautology
+\begin{table} [!h]
+    \begin{tabular}{|l|l|l|l|l|l|}
+        \hline
+        X & Y & $ X \implies Y$ & $ \lnot (X \implies Y )$ & $ Y \implies X$ & $ (\lnot (X \implies Y )) \implies (Y \implies X) $ \\ \hline
+        T & T & T               & F                        & T               & T                                                   \\ 
+        T & F & F               & T                        & T               & T                                                   \\ 
+        F & T & T               & F                        & F               & T                                                   \\ 
+        F & F & T               & F                        & T               & T                                                   \\
+        \hline
+    \end{tabular}
+\end{table}
+\item This is a contingency
+\begin{table}[!h]
+    \begin{tabular}{|l|l|l|l|l|l|l|l|}
+        \hline
+        P  & Q & R & $ \lnot P $ & $ \lnot Q $ & $ \lnot P \land \lnot Q $ & $ R \implies Q $ & $ (\lnot P \land \lnot Q) \implies (R \implies Q) $ \\ \hline
+        T  & T & T & F           & F           & F                         & T                & T                                                   \\ 
+        T  & T & F & F           & F           & F                         & T                & T                                                   \\ 
+        T  & F & T & F           & T           & F                         & F                & T                                                   \\ 
+        T  & F & F & F           & T           & F                         & T                & T                                                   \\ 
+        F  & T & T & T           & F           & F                         & T                & T                                                   \\ 
+        F  & T & F & T           & F           & F                         & T                & T                                                   \\ 
+        F  & F & T & T           & T           & T                         & F                & F                                                   \\ 
+        F  & F & F & T           & T           & T                         & T                & T                                                   \\
+        \hline
+    \end{tabular}
+\end{table}
+\end{enumerate}
+\section*{Problem 2}
+\begin{enumerate} [label=\alph*]
+%
+\item The left side of the equation is: 
+    $ \left(X \implies Y \right) \lor \left( X \implies Z \right)$ \\
+    $ \equiv ( \lnot X \lor Y ) \lor (\lnot X \lor Z)$  \qquad {Condition Identity}  \\
+    $ \equiv ( \lnot X \lor Y \lor \lnot X ) \lor (\lnot X \lor Y \lor Z)$  \qquad {Associative Property} \\
+    $ \equiv ( \lnot X \lor Y) \lor ( \lnot X \lor Y \lor Z)$   \qquad {Idempotent Identity} \\
+    $ \equiv ( \lnot X \lnot X \lor Y \lor Y) \lor (Z)$   \qquad {Associative Identity} \\
+    $ \equiv ( \lnot X \lor Y ) \lor ( Z) $  \qquad {Idempotent Identity} \\
+    $ \equiv  \lnot X \lor ( Y \lor Z ) $  \qquad {Associative Identity} \\
+    $ \equiv X \implies (Y \lor Z ) $  \qquad {Conditional Identity} \\
+        %\ite blah
+\item Starting from the left side again:
+	$ ( P \iff Q) $
+	$ \equiv (P \implies Q ) \land (Q \implies P ) $ \qquad {Biconditional Identity} \\
+	$ \equiv (P \implies Q ) \land (\lnot Q \lor P) $ \qquad {Conditional Identity} \\
+	$ \equiv (P \implies Q ) \land (\lnot (\lnot P) \lor \lnot Q ) $ \qquad {Commutative and Double Negative Properties} \\
+	$ \equiv (P \implies Q ) \land (\lnot P \implies \lnot Q) $ \qquad {Conditional Identity} \\
+%\item Blah
+\end{enumerate}
+\section*{Problem 3}
+\begin{enumerate} [label=\alph*]
+	\item In this case, let us assume P = False. Therefore, as shown in class, $ (P \Rightarrow Q ) $ is always true. Similarly, $P \implies ( Q \Rightarrow R )$ is always True. However, we can find R such that $ (P \Rightarrow Q) \Rightarrow R  $ is not true, that is, when R is False. So, for P = False, R = False, the two expressions are not the same and therefore the expressions are logically different. 
+	\item To show that the two expressions: $ (X \land Y) \lor Z $ and $ X \land (Y \lor Z)$ are not equivalent, let X = False. Now, if Z is picked as True, $ (X \land Y) $ is False, and $ (X \land Y) \lor Z $ is True. On the other hand, $ X \land (Y \lor Z)$ is False since X is False. Therefore, the two sides are not equivalent here. 
+\end{enumerate}
+\section*{Problem 4}
+\begin{enumerate} [label=\alph*]
+	\item D $\Rightarrow$ H
+	\item $\lnot P \land \lnot J$
+	\item  $\forall x (K(x) \land (x = k) ) \implies S $%(x = k) $
+	\item B $\Rightarrow$ Q
+	\item A
+	\item (If you jump over buildings, then you must be a superhero) $ B \Rightarrow H$
+	\item (Rephrasing: if x can marry my daughter, then x must be a knight) $ \forall x M(x,d) \Rightarrow K(x)$
+	\item (There exists at least four distinct $x_i$'s, such that P($x_i$) holds and the $x_i$'s are all distinct). This is written as: $(\exists x_1 P(x_1)) \land (\exists x_2 P(x_2)) \land (\exists x_3 P(x_3)) \land (\exists x_4 P(x_4)) \land (x_1 \neq x_2 \neq x_3 \neq x_4) $
+	\item For this, let x be the squart root of 5. For a number to be irrational, it cannot be written as a fraction of two integers, ie, there are not both numbers m, n such that $ x \neq frac{m}{n} $ \\ This can be written as: $\forall x (x \cdot x = 5) \implies \lnot [\exists m I(m) \land  \exists n I(n) \land (m = n \cdot x)] $
+
+\end{enumerate}
+\section*{Problem 5}
+\begin{enumerate} [label=\alph*]
+\item Converse: If Susan needs to take Math 240, then she is a sophomore.\\ Contrapositive: If Susan is not a sophomore, then she does not need to take Math 240 
+\item Converse: If one keeps trying, one will succeed. \\ Contrapositive: If one does not keep trying, then one will not succeed 
+\item Converse: If you've paid your library fines, then you can graduate \\
+Contrapositive: If you haven't paid your library fines, then you can't graduate.
+\end{enumerate}
+
+\section*{Problem 6}
+Knights only tell the truth, and knaves only lie. \\
+Let, P : A is a knight \\
+Q : B is a knight \\
+R: C is a knight \\
+A says: B is a knave \qquad (1) \\
+B says: A and C are the same \qquad (2) \\
+Formulating (1) into a logical expression:
+$ P \iff \lnot Q$ \qquad(3) \\ (If and only if A is a knight, then A is telling the truth and B is a knave) \\
+$ Q \iff ((P \land R) \lor (\lnot P \land \lnot R)) $ \qquad (4) \\ If B is a knight, then either A and C are both knights, or A and C are both knaves \\
+From (3):
+$ P \iff \lnot Q \equiv (P \land \lnot Q) \lor (\lnot P \land Q)$ \qquad (From the biconditional identity) \\
+This means either P or Q is true, but not both.  \\
+From (4): \\
+$ Q \iff ((P \land R) \lor (\lnot P \land \lnot R))$\\$ \equiv Q \land ((P \land R) \lor (\lnot P \land \lnot R)) \lor \lnot Q \land \lnot ((P \land R) \lor (\lnot P \land \lnot R)) $ \qquad  (Using the Biconditional identity) \\
+$\equiv Q \land ((P \land R) \lor (\lnot P \land \lnot R)) \lor \lnot Q \land ((P \lor R) \land (\lnot P \lor \lnot R)) $ \qquad (By DeMorgan's laws) \\
+$ \equiv Q \land ((P \land R) \lor (\lnot P \land \lnot R)) \lor \lnot Q \land ((\lnot P \land R) \lor (P \land \lnot R))$ \qquad (By distributive and complement and identity laws) \\
+$\equiv  P \land ( (Q \land R )\lor (\lnot Q \land \lnot R) ) \lor \lnot P \land ((Q \land \lnot R) \lor (\lnot Q \land R))$ \qquad (By the distributive and associative laws) \\
+This means, that if P is true, then either Q and R are both true or Q and R are both false $\Rightarrow$ B and C are the same type if A is a knight $\Rightarrow$ From (1) B must be a knave and so C must be a knave \\
+Alternatively, if P is false, then either Q is true or R is true but not both $\Rightarrow$ B and C are different types if A is a knave $\Rightarrow$ Q is true (from (3)) i.e., B is a knight and therefore, C must be a knave. \\
+So, in either case, C is a knave
+\section*{Problem 7}
+\begin{enumerate}  [label=\Alph*]
+	\item $\forall x (P(x) \land ((\exists y P(y)) \land (\exists y R(x,y)) \implies (\exists y P(y))))$ \\
+	$ \equiv \forall x (P(x) \land ((\exists y \lnot P(y)) \lor  \forall y \lnot R(x,y) \lor \exists y P(y))) $ \qquad (By the deMorgan's law) \\ $ \equiv \forall x (P(x) \land T ) $ \qquad (By commutative and complement and dominant property) \\ $\equiv \forall x (P(x)) $ \qquad (By the dominant property again) \\ Negating the statement gives: $\lnot (\forall x P(x)) \equiv \exists x \lnot P(x) $
+	Match (4)
+	\item $\forall x \forall y (\lnot R(x,y) \lor \lnot P(x))$ \\ The negation is $\exists x \exists y \lnot (\lnot R (x,y) \lor \lnot P(x)) \equiv \exists x \exists y (R(x,y) \land P(x)) $, using first deMorgan's law, and then double negative rule. \\
+	Match: (3)
+	\item $\forall x (P(x) \iff \exists y R(x,y)) \equiv \forall x ((P(x) \land \exists y R(x,y)) \lor (\lnot P(x) \land \forall y \lnot R(x,y))) $ \qquad (From the biconditional rule). \\ The negation is $ \exists x \lnot ((P(x) \land \exists y R(x,y)) \lor (\lnot P(x) \land \forall y \lnot R(x,y)))$ \\ $\equiv \exists x (\lnot (P(x) \land \exists y R(x,y)) \land \lnot((\lnot P(x) \land \forall y \lnot R(x,y))))$ \qquad (By deMorgan's Thm.) \\ $\exists x ((\lnot P(x) \lor \forall y \lnot R(x,y)) \land (P(x) \lor \exists y R(x,y)))$ \qquad (By deMorgan's Thm.) \\ $(P(x) \lor \exists y R(x,y)) \land (\lnot P(x) \lor \forall y \lnot R(x,y))$ \qquad  (By commutative property) \\ Match (2)
+	\item $\forall x \forall y (P(x) \land R(x,y) \Rightarrow R(y,x))$ \\ $ \equiv \forall x \forall y ((P(x) \land R(x,y)) \Rightarrow R(y,x))$ \qquad (By order of precedence of operations) \\ The negation is: $ \exists x \exists y \lnot(\lnot(P(x) \land R(x,y)) \lor R(y,x)) $ \qquad (By Conditional property) \\ $ \equiv \exists x \exists y (P(x) \land R(x,y) \land \lnot R(y,x))$ \qquad (By deMorgan's thm) \\ Match (1)
+
+\end{enumerate}
+\section*{Problem 8}
+From the truth table, the equation $P * Q $ is the same as $ \lnot (P \land Q)$ 
+ First, I will try to reduce the given expression $ \lnot ( X \Rightarrow (\lnot X \lor \lnot Y)) $ into a simpler form. \\
+ $ \lnot ( X \Rightarrow (\lnot X \lor \lnot Y)) $ \\
+ $ \equiv \lnot (\lnot X \lor (\lnot X \lor \lnot Y))$ \qquad{ By the conditional identity} \\
+ $ \equiv \lnot (\lnot X \lor \lnot Y) $ \qquad {By the idempotent identity} \\
+ $ \equiv (X \land Y)$ \qquad {By DeMorgan's law} \\
+ Therefore, we need to write $ X \land Y$ in terms of $ P * Q \equiv \lnot (P \land Q)$ \\
+ Proof: \\
+ $ X \land Y \equiv \lnot (\lnot (X \land Y)) $ \qquad (Property of negation) \\
+ $ \equiv \lnot ((\lnot(X \land Y)) \land (\lnot(X \land Y)))$ \qquad (Idempotent property) \\
+ $ \equiv (\lnot(X \land Y)) * (\lnot(X \land Y)) $ \qquad (From the definition of $*$)\\
+ $ \equiv (X * Y ) * (X * Y)$ (From the definition of $*$) \\
+
+\end{document}

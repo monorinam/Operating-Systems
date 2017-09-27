@@ -1,0 +1,11 @@
+COMP 350:
+Lecture 11th September:
+A1 out
+	Conversion between binary and decimal representations
+	Computer representaton of integers (sign and magnitude, 2's complement)
+Today:
+	Computer representation of noninteger real numbers
+		Fixed point system
+			Limitation on size of numbers stored (between 2^-16 and 2^15 for 32 bit numbers)
+		Floating point system
+

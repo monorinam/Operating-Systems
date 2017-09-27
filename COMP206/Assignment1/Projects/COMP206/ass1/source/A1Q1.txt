@@ -1,0 +1,12 @@
+COMP 206 Assignment 1 Question 1.
+ID: 260364335
+
+Summary of the Linux Documentation Project Manifesto
+
+The Linux Documentation Project (LDP) creates a free set of detailed documentation for Linux/GNU applications and utilities.
+
+ The main goal of the project is to have a centralised documentation base for Linux/GNU topics, and to fill in gaps in documentation provided by utilities.
+ 
+The LDP maintains guides on broad topics as well as how-to's. 
+
+The LDP is written and maintained by volunteers, and is freely available under copyright. 
