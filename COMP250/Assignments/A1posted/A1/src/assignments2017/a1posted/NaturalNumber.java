@@ -1,8 +1,8 @@
 package assignments2017.a1posted;
 
 /*
- *   STUDENT NAME      :   Monorina Mukhopadhyay	
- *   STUDENT ID        :   260364335
+ *   STUDENT NAME      :  Monorina Mukhopadhyay	
+ *   STUDENT ID        :  260364335
  *   
  *   If you have any issues that you wish the T.A.s to consider, then you
  *   should list them here.   If you discussed on the assignment in depth 
@@ -167,15 +167,15 @@ public class NaturalNumber  {
 		//   Note 'firstClone' and 'secondClone' have the same size.  We add the coefficients
 		//   term by term.    If the last coefficient yields a carry, then we add 
 		//   one more term with the carry.
-		
 		int carry = 0;
-		for(int i = 0; i < firstClone.coefficients.size() ; i ++ )
+		for (int i = 0; i < firstClone.coefficients.size(); i++)
 		{
-			//r[i] = a[i] + b[i] + carry)%this.base;
-			sum.coefficients.addLast((firstClone.coefficients.get(i) + secondClone.coefficients.get(i) + carry)%firstClose.coefficient.base);
-			carry = (firstClone.coefficients.get(i) + secondClone.coefficients.get(i) + carry)/firstClose.coefficient.base
+			sum.coefficients.addLast((firstClone.coefficients.get(i) + secondClone.coefficients.get(i) + carry)%firstClone.base);
+			carry = (firstClone.coefficients.get(i) + secondClone.coefficients.get(i) + carry)/firstClone.base;			
+			
 		}
 		sum.coefficients.addLast(carry);
+		sum = sum.leadZeroRemoval();
 		//  ---------  END SOLUTION (plus)  ----------
 		
 		return sum;		
@@ -221,6 +221,7 @@ public class NaturalNumber  {
 			throw new Exception();
 		}
 		
+		
 		//    ADD YOUR CODE HERE
 		
 		// --------------  BEGIN SOLUTION (multiply)  ------------------
@@ -232,6 +233,19 @@ public class NaturalNumber  {
 		 *            
 		 *   Note we use a helper method.  See below.
 		 */
+		 NaturalNumber multiplier = this.clone();
+		NaturalNumber multiplic2 = multiplicand.clone();
+		NaturalNumber prodLine = new NaturalNumber( multiplier.base);
+		for (int i = 0; i < multiplier.coefficients.size(); i++)
+		{
+			prodLine = multiplic2.timesSingleDigit(multiplier.coefficients.get(i));
+			// pad with trailing zeros for the multiplication
+			for(int j = 0; j < i; j ++)
+			{
+				prodLine.coefficients.addFirst(0);
+			}
+			product = product.plus(prodLine);
+		}
 
 		
 		//  ---------------  END SOLUTION  (multiply) -------------------
@@ -245,6 +259,20 @@ public class NaturalNumber  {
 	/*
 	 *    'this' (the caller) will be the multiplicand.   
 	 */
+	public NaturalNumber timesSingleDigit(int factorMult)
+	{
+		NaturalNumber prodLine = new NaturalNumber(this.base);
+		NaturalNumber mult1Clone = this.clone();
+		int carry = 0;
+		for (int i =0; i < mult1Clone.coefficients.size(); i++)
+		{
+			prodLine.coefficients.addLast((mult1Clone.coefficients.get(i)*factorMult + carry)%mult1Clone.base);
+			carry = (mult1Clone.coefficients.get(i)*factorMult + carry)/mult1Clone.base;
+			
+		}
+		prodLine.coefficients.addLast(carry);
+		return prodLine.leadZeroRemoval();
+	}
 	
 	
 	//   END SOLUTION ----------  *helper method* for multiply ---------
@@ -285,8 +313,33 @@ public class NaturalNumber  {
 		//   ADD YOUR CODE HERE
 		
 		//  ---------  BEGIN SOLUTION (minus)  ----------
-		
-		
+		// Add leading zeros to clone of second to make subtraction easier
+		NaturalNumber secondClone = second.clone();
+		//secondClone.addLeadingZeros(first.coefficients.size() - second.coefficients.size());
+		// Add leading zeros
+		for(int i = 0; i < first.coefficients.size()- second.coefficients.size(); i++)
+		{
+			secondClone.coefficients.addLast(0);
+		}
+		// borrow is the flag which indicates if the previous elements borrowed from the current (1 is true)
+		int borrow = 0;
+		for(int i = 0; i < first.coefficients.size(); i++)
+		{
+			if(borrow == 1) // the last row of coefficients borrow from this row
+			{
+				first.coefficients.set(i,first.coefficients.get(i) - 1);
+			}
+			if(first.coefficients.get(i) >= secondClone.coefficients.get(i))
+			{	
+				difference.coefficients.addLast(first.coefficients.get(i) - secondClone.coefficients.get(i));
+				borrow = 0;
+			}
+			else
+			{
+				borrow = 1;
+				difference.coefficients.addLast(first.base + first.coefficients.get(i) - secondClone.coefficients.get(i));
+			}
+		}	
 
 		//  ---------  END SOLUTION (minus)  ----------
 
@@ -349,12 +402,83 @@ public class NaturalNumber  {
 		}
 		
 		NaturalNumber  remainder = this.clone();
+		
+
+		
+		
 
 		//   ADD YOUR CODE HERE.
 		
 		//  --------------- BEGIN SOLUTION (divide) --------------------------
-		
-		
+		/* Long division algorithm:
+		The algorithm implemented is a version of the long division algorithm
+		called Chunking: https://en.wikipedia.org/wiki/Chunking_(division)
+
+		I also referenced the binary version here: 
+		https://en.wikipedia.org/wiki/Division_algorithm#Integer_division_.28unsigned.29_with_remainder 
+		Shifting an element in binary is the same as doing element * base^factor in any other base
+
+		In long divisor, say with 3642 divided by 14, what we do is:
+		 we 'pick' 36 and find what 36/14 is (=2), and then subtract 14*2 from 
+		36 to get the remainder for the next line, and then bring down the next number (4) 
+		from 3642. Technically, this is doing 3642 - 1400*2 = 842 and then 842 - 140*6 and so on
+		until we get a remainder less than 14. 
+		The algorithm is 
+		while(remainder > divisor)
+			factor = sizeOf(remainder) - sizeOf(divisor)
+			divisorMult = divisor * base^(factor)
+			quotientElement = 0
+			while(remainder > divisorMult*quotientElement)
+				quotientElement ++
+			remainder = remainder - divisorMult*(quotientElement)
+			update quotient as quotient + [quotientElement 0 0 .. factor-1 times] 
+		*/
+		NaturalNumber divisorMult = divisor.clone();
+
+		//Some exceptional cases to take care of:
+		if(remainder.compareTo(divisor) == 0) //(a / a should give us 1)
+			quotient.coefficients.addFirst(1);
+		else
+			quotient.coefficients.addFirst(0); //to make sure that if the a/b with a < b then zero is returned.
+
+
+		while(remainder.compareTo(divisor) == 1)
+		{
+			int factor = remainder.coefficients.size() - divisor.coefficients.size();
+			// To handle the case where factor * divisor would be greater than remainder 
+			// Such as 358 / 9 and then factor would give 2 and 900 > 358 so we have to
+			// make that 90
+			if(divisorMult.clone().timesBaseToThePower(factor).compareTo(remainder) == 1)
+			{
+				factor = factor - 1;
+				
+			}
+			divisorMult.timesBaseToThePower(factor);
+			
+			NaturalNumber quotientElement = new NaturalNumber(this.base);
+			quotientElement.coefficients.addFirst(0);
+			// this part replaces slow division by finding the multiple of the divisor first, and then
+			// subtracting divisor * multiple to find the quotient
+
+			while(remainder.compareTo(divisorMult.timesSingleDigit(quotientElement.coefficients.getFirst() + 1)) == 1)
+			{
+				quotientElement.coefficients.set(0, quotientElement.coefficients.get(0) + 1);
+			}
+			
+			remainder = remainder.minus(divisorMult.timesSingleDigit(quotientElement.coefficients.get(0)));
+
+			//Shift the quotient element by factor times, and add them together
+			//Return the divisor back to original state
+			divisorMult = divisor.clone();
+			for (int i = 1; i <= factor ; i++)
+			{
+					quotientElement.coefficients.addFirst(0);
+			}
+			quotient = quotient.plus(quotientElement);
+
+			// store the divisor here again
+		}
+		quotient = quotient.leadZeroRemoval();
 		// -------------  END SOLUTION  (divide)  ---------------------
 
 		return quotient;		
@@ -382,7 +506,18 @@ public class NaturalNumber  {
 		}
 		return copy;
 	}
-	
+	public NaturalNumber leadZeroRemoval()
+	{
+		// This method removes leading zeros from a number.
+		// It is the exact same thing as from the minus method
+		// given in the handout
+		NaturalNumber cloneNum = this.clone();
+		while ((cloneNum.coefficients.size() > 1) & 
+				(cloneNum.coefficients.getLast().intValue() == 0)){
+			cloneNum.coefficients.removeLast();
+		}
+		return cloneNum;	
+	}
 	/*
 	 *  The subtraction method (minus) computes a-b and requires that a>b.   
 	 *  The a.compareTo(b) method is useful for checking this condition. 
@@ -392,7 +527,18 @@ public class NaturalNumber  {
 	 *  The compareTo() method assumes that the two numbers have the same base.
 	 *  One could add code to check this but I didn't.
 	 */
-	
+	//public NaturalNumber findQuotient(NaturalNumber divisor) //does a subtraction loop to find the quotient of this/divisor
+	//{
+		// NaturalNumber remTemp = this.clone();
+		// int countquotient = 0;
+		// while(remTemp.compareTo(divisor) == 1)
+		// {
+		// 	countquotient++;
+		// 	remTemp = remTemp.minus(divisor);
+		// }
+		// NaturalNumber countNatNum = new NaturalNumber(countquotient, this.base);
+		// return countNatNum;
+	//}
 	private int 	compareTo(NaturalNumber second){
 
 		//   if  this < other,  return -1  

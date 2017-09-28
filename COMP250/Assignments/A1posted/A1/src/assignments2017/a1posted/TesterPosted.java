@@ -13,9 +13,9 @@ public class TesterPosted {
 		//String s1 = "42345614234561000343453440000343453440";
 		//String s2 = "22320000423456100034345344000042";
 
-		int base = 8;
-		String s1 = "52600";
-		String s2 = "375";
+		int base = 10;
+		String s1 = "13140147254127766621367370415901601490657439977929";
+		String s2 = "0";
 		
 		BigInteger big1 = new BigInteger(s1,base);
 		BigInteger big2 = new BigInteger(s2,base);
@@ -33,7 +33,7 @@ public class TesterPosted {
 		System.out.print("sum: big1+big2 =        (");
 		System.out.println(big1.add(big2).toString(base) + ")_" + base );  // BigInteger
 		System.out.print("sum: n1+n2     =        ");
-		//System.out.println(n1.plus(n2));                     // NaturalNumber
+		System.out.println(n1.plus(n2));                     // NaturalNumber
 		System.out.println();
 		
 		//  The BigInteger class uses a 'subtract' method for addition, but NaturalNumber 
@@ -43,7 +43,7 @@ public class TesterPosted {
 		System.out.print("diff: big1-big2 =       (");
 		System.out.println(big1.subtract(big2).toString(base)  + ")_" + base );  // BigInteger
 		System.out.print("diff: n1-n2     =       ");
-		//System.out.println(n1.minus(n2));                         // NaturalNumber
+		System.out.println(n1.minus(n2));                         // NaturalNumber
 
 		//  The BigInteger class uses a 'multiply' method for addition. NaturalNumber 
 		//  uses 'times' instead.  
@@ -54,22 +54,22 @@ public class TesterPosted {
 		System.out.println( ")_" + base);
 		
 		System.out.print("multiply: n1*n2       = ");               // NaturalNumber
-		//System.out.println(n1.times(n2));
+		System.out.println(n1.times(n2));
 		System.out.println();
 		
 		System.out.print("slow multiply: n1*n2  = ");               // NaturalNumber
-		//System.out.println(n1.slowTimes(n2));
+		System.out.println(n1.slowTimes(n2));
 		System.out.println();
 				
 		System.out.print("divide: big1/big2     = (");              // BigInteger  
 		System.out.println(big1.divide(big2).toString(base)  + ")_" + base);
 
 		System.out.print("divide: n1/n2         = ");                 // NaturalNumber
-	//	System.out.println(n1.divide(n2));
+		System.out.println(n1.divide(n2));
 		System.out.println();
 		
 		System.out.print("slow divide: n1/n2    = ");               // NaturalNumber
-	//	System.out.println(n1.slowDivide(n2));
+		System.out.println(n1.slowDivide(n2));
 
 		/*   mod
 		
