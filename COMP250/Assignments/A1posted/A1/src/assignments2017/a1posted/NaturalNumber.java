@@ -236,6 +236,12 @@ public class NaturalNumber  {
 		 NaturalNumber multiplier = this.clone();
 		NaturalNumber multiplic2 = multiplicand.clone();
 		NaturalNumber prodLine = new NaturalNumber( multiplier.base);
+		/* Here, we calculate each line of the multiplication matrix using
+		the timesSingleDigit helper method, and then add trailing zeros
+		to the line, and finally add the line with zeros to the total to 
+		get the answers. (So 234 * 25 gives us the first line as 1170, and no zeros are added, 
+		and 468 as the second line so we make it 4680 and then add them. )
+		*/
 		for (int i = 0; i < multiplier.coefficients.size(); i++)
 		{
 			prodLine = multiplic2.timesSingleDigit(multiplier.coefficients.get(i));
@@ -259,6 +265,9 @@ public class NaturalNumber  {
 	/*
 	 *    'this' (the caller) will be the multiplicand.   
 	 */
+	/* This method implements the multiplication of a long number with a single digit using
+	grade school arithmatic. We just multiply each coefficient with the factor and add any carry 
+	from the previous line and then normalize using base to get the new carry*/
 	public NaturalNumber timesSingleDigit(int factorMult)
 	{
 		NaturalNumber prodLine = new NaturalNumber(this.base);
@@ -313,9 +322,19 @@ public class NaturalNumber  {
 		//   ADD YOUR CODE HERE
 		
 		//  ---------  BEGIN SOLUTION (minus)  ----------
+		/*In this algorithm, first leading zeros are added to make the two numbers have the same numer of
+		coefficients. Then I subtract the coefficients of second from first, starting at the 0th one. I track
+		borrow using the borrow flag. The algorithm is like this:
+		if previous line borrowed
+			subtract one from first element
+		if first coefficient is bigger than second or equal
+			subtract them and set the borrow flag to 0
+		if first coefficient is smaller
+			set borrow flag to 1 and add base (the borrowing amount) 
+			to second coefficient
+		*/
 		// Add leading zeros to clone of second to make subtraction easier
 		NaturalNumber secondClone = second.clone();
-		//secondClone.addLeadingZeros(first.coefficients.size() - second.coefficients.size());
 		// Add leading zeros
 		for(int i = 0; i < first.coefficients.size()- second.coefficients.size(); i++)
 		{
@@ -433,7 +452,7 @@ public class NaturalNumber  {
 			remainder = remainder - divisorMult*(quotientChunk)
 			update quotient as quotient + [quotientChunk 0 0 .. factor-1 times] 
 		*/
-		NaturalNumber divisorMult = divisor.clone();
+		
 
 		//Some exceptional cases to take care of:
 		if(remainder.compareTo(divisor) == 0) //(a / a should give us 1)
@@ -450,13 +469,14 @@ public class NaturalNumber  {
 			// To handle the case where divisor*(base^factor) would be greater than remainder 
 			// Such as 358 / 9 and then factor would give 2 and 900 > 358 so we have to
 			// make that chunk 90
-			if(divisorMult.clone().timesBaseToThePower(factor).compareTo(remainder) == 1)
+			if(divisor.clone().timesBaseToThePower(factor).compareTo(remainder) == 1)
 			{
 				factor = factor - 1;
 				
 			}
-
-			divisorMult.timesBaseToThePower(factor);
+			// this is a faster way that looping through and adding zeros but they do the same
+			// (In the binary algorithm, this is "shifting" to the left)
+			NaturalNumber divisorMult = divisor.clone().timesBaseToThePower(factor);
 			
 			NaturalNumber quotientChunk = new NaturalNumber(this.base);
 			quotientChunk.coefficients.addFirst(0);
@@ -472,14 +492,10 @@ public class NaturalNumber  {
 			}
 			
 			remainder = remainder.minus(divisorMult.timesSingleDigit(quotientChunk.coefficients.get(0)));
-
-			
-			//Return the divisor back to original state, since we are done using it
-			divisorMult = divisor.clone();
 			//Update the quotient. Adding to the previous quotient takes care of cases
 			// With zeros in between. So if 809/8, then the first chunk is 800 (100*8), remainder
 			// is 8, and we need to save the quotient as 100 and not just 1. In the next round,
-			// we want 100 + 1, not 1001 so we add to previous quotient.
+			// we want 100 + 1, not 1001 so we add to previous quotient instead of just doing addFirst().
 			for (int i = 1; i <= factor ; i++)
 			{
 					quotientChunk.coefficients.addFirst(0);
@@ -488,6 +504,7 @@ public class NaturalNumber  {
 
 			// store the divisor here again
 		}
+		// remove any leading zeros
 		quotient = quotient.leadZeroRemoval();
 		// -------------  END SOLUTION  (divide)  ---------------------
 
@@ -516,6 +533,7 @@ public class NaturalNumber  {
 		}
 		return copy;
 	}
+
 	public NaturalNumber leadZeroRemoval()
 	{
 		// This method removes leading zeros from a number.
@@ -537,18 +555,6 @@ public class NaturalNumber  {
 	 *  The compareTo() method assumes that the two numbers have the same base.
 	 *  One could add code to check this but I didn't.
 	 */
-	//public NaturalNumber findQuotient(NaturalNumber divisor) //does a subtraction loop to find the quotient of this/divisor
-	//{
-		// NaturalNumber remTemp = this.clone();
-		// int countquotient = 0;
-		// while(remTemp.compareTo(divisor) == 1)
-		// {
-		// 	countquotient++;
-		// 	remTemp = remTemp.minus(divisor);
-		// }
-		// NaturalNumber countNatNum = new NaturalNumber(countquotient, this.base);
-		// return countNatNum;
-	//}
 	private int 	compareTo(NaturalNumber second){
 
 		//   if  this < other,  return -1  
