@@ -13,9 +13,9 @@ public class TesterPosted {
 		//String s1 = "42345614234561000343453440000343453440";
 		//String s2 = "22320000423456100034345344000042";
 
-		int base = 10;
-		String s1 = "13140147254127766621367370415901601490657439977929";
-		String s2 = "0";
+		int base = 2;
+		String s1 = "101101011101101011";
+		String s2 = "10111";
 		
 		BigInteger big1 = new BigInteger(s1,base);
 		BigInteger big2 = new BigInteger(s2,base);
@@ -58,7 +58,7 @@ public class TesterPosted {
 		System.out.println();
 		
 		System.out.print("slow multiply: n1*n2  = ");               // NaturalNumber
-		System.out.println(n1.slowTimes(n2));
+		//System.out.println(n1.slowTimes(n2));
 		System.out.println();
 				
 		System.out.print("divide: big1/big2     = (");              // BigInteger  
@@ -69,7 +69,7 @@ public class TesterPosted {
 		System.out.println();
 		
 		System.out.print("slow divide: n1/n2    = ");               // NaturalNumber
-		System.out.println(n1.slowDivide(n2));
+		//System.out.println(n1.slowDivide(n2));
 
 		/*   mod
 		

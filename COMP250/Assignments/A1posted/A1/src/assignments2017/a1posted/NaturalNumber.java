@@ -427,11 +427,11 @@ public class NaturalNumber  {
 		while(remainder > divisor)
 			factor = sizeOf(remainder) - sizeOf(divisor)
 			divisorMult = divisor * base^(factor)
-			quotientElement = 0
-			while(remainder > divisorMult*quotientElement)
-				quotientElement ++
-			remainder = remainder - divisorMult*(quotientElement)
-			update quotient as quotient + [quotientElement 0 0 .. factor-1 times] 
+			quotientChunk = 0
+			while(remainder > divisorMult*quotientChunk)
+				quotientChunk ++
+			remainder = remainder - divisorMult*(quotientChunk)
+			update quotient as quotient + [quotientChunk 0 0 .. factor-1 times] 
 		*/
 		NaturalNumber divisorMult = divisor.clone();
 
@@ -444,37 +444,47 @@ public class NaturalNumber  {
 
 		while(remainder.compareTo(divisor) == 1)
 		{
+			//Find the multiple of the divisor to create the chunk 
+			// First find the multiples of base to scale the divisor by
 			int factor = remainder.coefficients.size() - divisor.coefficients.size();
-			// To handle the case where factor * divisor would be greater than remainder 
+			// To handle the case where divisor*(base^factor) would be greater than remainder 
 			// Such as 358 / 9 and then factor would give 2 and 900 > 358 so we have to
-			// make that 90
+			// make that chunk 90
 			if(divisorMult.clone().timesBaseToThePower(factor).compareTo(remainder) == 1)
 			{
 				factor = factor - 1;
 				
 			}
+
 			divisorMult.timesBaseToThePower(factor);
 			
-			NaturalNumber quotientElement = new NaturalNumber(this.base);
-			quotientElement.coefficients.addFirst(0);
-			// this part replaces slow division by finding the multiple of the divisor first, and then
+			NaturalNumber quotientChunk = new NaturalNumber(this.base);
+			quotientChunk.coefficients.addFirst(0);
+
+			// this part replaces slow division by finding the multiple of the divisor chunk that needs
+			// to be subtracted from remainder so for 487/2, the previous part makes 200 and this 
+			// part finds the scale to turn 200 to 400, and then
 			// subtracting divisor * multiple to find the quotient
 
-			while(remainder.compareTo(divisorMult.timesSingleDigit(quotientElement.coefficients.getFirst() + 1)) == 1)
+			while(remainder.compareTo(divisorMult.timesSingleDigit(quotientChunk.coefficients.getFirst() + 1)) == 1)
 			{
-				quotientElement.coefficients.set(0, quotientElement.coefficients.get(0) + 1);
+				quotientChunk.coefficients.set(0, quotientChunk.coefficients.get(0) + 1);
 			}
 			
-			remainder = remainder.minus(divisorMult.timesSingleDigit(quotientElement.coefficients.get(0)));
+			remainder = remainder.minus(divisorMult.timesSingleDigit(quotientChunk.coefficients.get(0)));
 
-			//Shift the quotient element by factor times, and add them together
-			//Return the divisor back to original state
+			
+			//Return the divisor back to original state, since we are done using it
 			divisorMult = divisor.clone();
+			//Update the quotient. Adding to the previous quotient takes care of cases
+			// With zeros in between. So if 809/8, then the first chunk is 800 (100*8), remainder
+			// is 8, and we need to save the quotient as 100 and not just 1. In the next round,
+			// we want 100 + 1, not 1001 so we add to previous quotient.
 			for (int i = 1; i <= factor ; i++)
 			{
-					quotientElement.coefficients.addFirst(0);
+					quotientChunk.coefficients.addFirst(0);
 			}
-			quotient = quotient.plus(quotientElement);
+			quotient = quotient.plus(quotientChunk);
 
 			// store the divisor here again
 		}
