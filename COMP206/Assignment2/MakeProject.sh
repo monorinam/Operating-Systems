@@ -4,6 +4,7 @@ cd
 if [[ ! -d "project" ]]; then
 	mkdir project
 fi
+#Change directories as requested
 cd project
 if [[ ! -d "cs206" ]]; then
 	mkdir cs206
@@ -15,11 +16,13 @@ else
 	mkdir -p $1/{archive,backup,docs,assets,database,source}
 	cd $1/source
 	if [ ! -e "backup.sh" ]; then
+		#Write a second bash script
   		echo "#!/bin/sh" >> backup.sh
   		echo "#This file was made by MakeProject.sh to copy things to backup" >> backup.sh
   		echo "find . -type f \( -name \"*.h\" -or -name \"*.c\" \) -exec cp {} ../backup \;" >>backup.sh
   		chmod 755 backup.sh
 	fi
-fi
+
 echo "Your project directories have been created"
+fi
 
