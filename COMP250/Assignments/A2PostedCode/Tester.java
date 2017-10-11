@@ -1,4 +1,4 @@
-package assignments2017.A2PostedCode;
+//package assignments2017.A2PostedCode;
 
 import java.io.IOException;
 import java.io.FileReader;
@@ -9,20 +9,20 @@ public class Tester{
     	
     //  You need to change your root directory.
     	
-	String root = "C:\\\\Users\\\\Michael\\\\Dropbox\\\\Eclipse (Yoga)\\\\250\\\\src\\\\assignments2017\\\\A2PostedCode\\\\tests\\\\";
+	String root = "~/Documents/Classes/McGill/Fall2017/COMP250/Assignments/A2PostedCode/tests/";
 	
-	String[] input = {"sample_in.txt"};
-	String[] output = {"sample_value.txt"};
-	String[] parsedExp = {"sample_exp.txt"};
+	String[] input = {"tests/sample_in.txt"};
+	String[] output = {"tests/sample_value.txt"};
+	String[] parsedExp = {"tests/sample_exp.txt"};
 	/**
 	 * Test each input file in the array of strings 'input'
 	 * and compare with expected output in corresponding file 
 	 * in output files listed in array of strings 'output'
 	 **/
-	for(int i = 0 ; i < input.length; i++){
-	    String inputFileName = root + input[i];
-	    String outputFileName = root + output[i];
-	    String expFileName = root + parsedExp[i];
+	for(int i = 0 ; i < 1; i++){
+	    String inputFileName = input[i];
+	    String outputFileName = output[i];
+	    String expFileName = parsedExp[i];
 
 	    FileReader fin = new FileReader(inputFileName);
 	    FileReader fout = new FileReader(outputFileName);

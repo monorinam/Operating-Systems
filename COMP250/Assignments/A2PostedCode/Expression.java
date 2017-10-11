@@ -1,4 +1,4 @@
-package assignments2017.A2PostedCode;
+//package assignments2017.A2PostedCode;
 
 /*
 
@@ -25,7 +25,7 @@ public class Expression  {
 		//..
 		//..
 		// Loop to tokenize the string
-		for(int i= 0; i<expressionString.length(),i++)
+		for(int i= 0; i<expressionString.length();i++)
 		{
 			//Check if string is whitespace, if so, ignore
 			if(expressionString.charAt(i) == ' ')
@@ -93,26 +93,30 @@ public class Expression  {
 		{
 			if(this.tokenList.get(i).equals("(") || this.tokenList.get(i).equals("["))
 				continue; //do nothing since opening brackets are not stored on stack
-			else if (this.tokenList.get(i).isInteger())
+			else if (this.isInteger(tokenList.get(i)))
 			{
 				//Push to valueStack
-				valueStack.push(this.tokenList.get(i));
+				valueStack.push(Integer.parseInt(this.tokenList.get(i)));
 			}
 			else if(this.tokenList.get(i).equals("+") || this.tokenList.get(i).equals("-") || this.tokenList.get(i).equals("*") || this.tokenList.get(i).equals("/") || this.tokenList.get(i).equals("++") || this.tokenList.get(i).equals("--"))
 			{
 				// operators pushed to operatorStack
 				operatorStack.push(this.tokenList.get(i));
 			}
+			else if(this.tokenList.get(i).equals("]"))
+			{
+				operatorStack.push("abs");
+			}
 			
-			else if (this.tokenList.get(i).equals(')') || this.tokenList.get(i).equals(']'))
+			else if (this.tokenList.get(i).equals(")"))
 			{
 				// Evaluate the last operation
 				// Pop element from operatorStack for evaluation
 				String operator = operatorStack.pop();
 				if(operator.equals("++"))
-					valueStack.push(valueStack.pop() + 1));
+					valueStack.push(valueStack.pop() + 1);
 				else if (operator.equals("--"))
-					valueStack.push(valueStack.pop() - 1));
+					valueStack.push(valueStack.pop() - 1);
 				else if (operator.equals("+"))
 					valueStack.push(valueStack.pop() + valueStack.pop());
 				else if (operator.equals("-"))
@@ -123,14 +127,24 @@ public class Expression  {
 					valueStack.push( valueStack.pop() - second);
 				}
 				else if (operator.equals("*"))
+				{
 					valueStack.push(valueStack.pop() * valueStack.pop());
+				}
 				else if (operator.equals("/"))
 				{
 						Integer second = valueStack.pop();
-						if(!second)
+						if(second != 0)
 						{
 							valueStack.push(valueStack.pop() / second);
 						}
+				}
+				else if (operator.equals("abs"))
+				{
+					valueStack.push(Math.abs(valueStack.pop()));
+					// int absoluteval = valueStack.pop();
+					// if(absoluteval < 0)
+					// 	absoluteval = absoluteval*-1;
+					// valueStack.push(absoluteval);
 				}
 				else 
 				{	//Illegal operator
@@ -138,23 +152,12 @@ public class Expression  {
 				} //end of evaluation else-if
 
 
-				// Calculate absolute value
-				if(this.tokenList.get(i).equals("]"))
-				{
-					//Check if allowed
-					valueStack.push(Math.abs(valueStack.pop()));
-					// int absoluteval = valueStack.pop();
-					// if(absoluteval < 0)
-					// 	absoluteval = absoluteval*-1;
-					// valueStack.push(absoluteval);
-				}
 
-			} // end of token else-if
+			} //end of token else if
 		} // end of for
 		return valueStack.pop();
 		//ADD YOUR CODE ABOVE HERE
 
-		return null;   // DELETE THIS LINE
 	}
 
 	//Helper methods
