@@ -57,7 +57,7 @@ public class Expression  {
 			}
 			if(expressionString.charAt(i) =='-')
 			{
-				if(expressionString.charAt(i+1) == '+')
+				if(expressionString.charAt(i+1) == '-')
 				{
 					token.append(expressionString.charAt(++i));
 				}
@@ -108,35 +108,48 @@ public class Expression  {
 			{
 				// Evaluate the last operation
 				// Pop element from operatorStack for evaluation
-				//Using switch case since the element called be popped only once
-				// And therefore if-else would require another variable
-				switch(operatorStack.pop())
+				String operator = operatorStack.pop();
+				if(operator.equals("++"))
+					valueStack.push(valueStack.pop() + 1));
+				else if (operator.equals("--"))
+					valueStack.push(valueStack.pop() - 1));
+				else if (operator.equals("+"))
+					valueStack.push(valueStack.pop() + valueStack.pop());
+				else if (operator.equals("-"))
 				{
-					case "++":
-						valueStack.push(valueStack.pop() + 1));
-						break;
-					case "--":
-						valueStack.push(valueStack.pop() - 1));
-						break;
-					case "+":
-						valueStack.push(valueStack.pop() + valueStack.pop());
-						break;
-					case "-":
+					//maintain order of subtraction
+					// in 2 - 5, 5 will be pushed last and popped first
+					Integer second = valueStack.pop();
+					valueStack.push( valueStack.pop() - second);
+				}
+				else if (operator.equals("*"))
+					valueStack.push(valueStack.pop() * valueStack.pop());
+				else if (operator.equals("/"))
+				{
 						Integer second = valueStack.pop();
-						valueStack.push( valueStack.pop() - second);
-						break;
-					case "*":
-						valueStack.push(valueStack.pop() * valueStack.pop());
-						break;
-					case "/":
-						Integer second = valueStack.pop();
-						valueStack.push(valueStack.pop() / second);
-						break;
-					default:
-						System.out.println("Illegal operator");
-				} //end of case
+						if(!second)
+						{
+							valueStack.push(valueStack.pop() / second);
+						}
+				}
+				else 
+				{	//Illegal operator
+					System.out.println("Illegal operator");
+				} //end of evaluation else-if
 
-			} // end of else-if
+
+				// Calculate absolute value
+				if(this.tokenList.get(i).equals("]"))
+				{
+					//Check if allowed
+					valueStack.push(Math.abs(valueStack.pop()));
+					// int absoluteval = valueStack.pop();
+					// if(absoluteval < 0)
+					// 	absoluteval = absoluteval*-1;
+					// valueStack.push(absoluteval);
+				}
+
+			} // end of token else-if
 		} // end of for
 		return valueStack.pop();
 		//ADD YOUR CODE ABOVE HERE
