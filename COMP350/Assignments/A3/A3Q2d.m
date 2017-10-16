@@ -10,20 +10,20 @@ for i = 1:(2*n+1)
     else
         A(1,1) = 10^-15;
     end
-
+    
     if(i ~= n+1)
-    %generate a_i's
-    if(i == 2*n+1)
-        A(2*n+1,1) = 10^-8;
-    else
-        A(i, 2*n+2 - i) = randn(1);
-    end
-    %find b_i's
+        %generate a_i's
+        if(i == 2*n+1)
+            A(2*n+1,1) = 10^-8;
+        else
+            A(i, 2*n+2 - i) = randn(1);
+        end
+        %find b_i's
         b(i) = A(i,i) + A(i,2*n+2-i);
     else
         b(i) = A(i,i);
     end
-   
+    
 end
 
 %test
@@ -34,3 +34,4 @@ x = A\b';
 xnp_norm = norm(x_np-x)/norm(x);
 npp_norm = norm(x_pp-x)/norm(x);
 epsilon  = eps('double')*cond(A,2);
+fprintf('xnp norm %ld xpp_norm %ld epsilon %ld \n',xnp_norm,xpp_norm,epsilon);

@@ -25,3 +25,4 @@ x = A\b';
 xnp_norm = norm(x_np-x)/norm(x);
 npp_norm = norm(x_pp-x)/norm(x);
 epsilon  = eps('double')*cond(A,2);
+fprintf('xnp norm %ld xpp_norm %ld epsilon %ld \n',xnp_norm,xpp_norm,epsilon);
