@@ -54,6 +54,7 @@ public class Expression  {
 				{
 					token.append(expressionString.charAt(++i));
 				}
+				//else if here?
 			}
 			if(expressionString.charAt(i) =='-')
 			{
@@ -61,7 +62,9 @@ public class Expression  {
 				{
 					token.append(expressionString.charAt(++i));
 				}
+				//else if here?
 			}
+			// Convert to string and add to arraylist and empty the token
 			tokenList.add(token.toString());
 			token.delete(0,token.length());
 
@@ -89,13 +92,15 @@ public class Expression  {
 		// Push (, 2, +, 3, +, ++, 3 into either of two stacks, then when ) is seen,
 		// evaluate ++3, pop from stack, store 4 on stack. For next ), evaluate 2+3+4 
 		// and pop from stack, push 9 to the value stack and return 9 by poping the only element left
+		// Reference: Please note I used the same form as Dijkstra's Shunting Yard Algorithm, which I saw in a 
+		// class previously.
 		for(int i = 0;i < this.tokenList.size();i++)
 		{
 			if(this.tokenList.get(i).equals("(") || this.tokenList.get(i).equals("["))
 				continue; //do nothing since opening brackets are not stored on stack
 			else if (this.isInteger(tokenList.get(i)))
 			{
-				//Push to valueStack
+				//Push value to valueStack
 				valueStack.push(Integer.parseInt(this.tokenList.get(i)));
 			}
 			else if(this.tokenList.get(i).equals("+") || this.tokenList.get(i).equals("-") || this.tokenList.get(i).equals("*") || this.tokenList.get(i).equals("/") || this.tokenList.get(i).equals("++") || this.tokenList.get(i).equals("--"))
@@ -105,6 +110,7 @@ public class Expression  {
 			}
 			else if(this.tokenList.get(i).equals("]"))
 			{
+				// Store the [] operator as abs when the closing bracket is reached
 				operatorStack.push("abs");
 			}
 			
@@ -132,6 +138,7 @@ public class Expression  {
 				}
 				else if (operator.equals("/"))
 				{
+						//maintain order of division
 						Integer second = valueStack.pop();
 						if(second != 0)
 						{
@@ -141,10 +148,6 @@ public class Expression  {
 				else if (operator.equals("abs"))
 				{
 					valueStack.push(Math.abs(valueStack.pop()));
-					// int absoluteval = valueStack.pop();
-					// if(absoluteval < 0)
-					// 	absoluteval = absoluteval*-1;
-					// valueStack.push(absoluteval);
 				}
 				else 
 				{	//Illegal operator
