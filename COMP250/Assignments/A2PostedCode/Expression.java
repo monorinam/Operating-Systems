@@ -27,48 +27,55 @@ public class Expression  {
 		// Loop to tokenize the string
 		for(int i= 0; i<expressionString.length();i++)
 		{
-			//Check if string is whitespace, if so, ignore
-			if(expressionString.charAt(i) == ' ')
-				continue;
-			
-			//Check if there are invalid characters in the string TODO
-			if(!(Character.isDigit(expressionString.charAt(i)) || expressionString.charAt(i) == '(' || expressionString.charAt(i) == ')' || expressionString.charAt(i) =='+' || expressionString.charAt(i) =='-' || expressionString.charAt(i) == '*' || expressionString.charAt(i) == '/' || expressionString.charAt(i) =='[' || expressionString.charAt(i) ==']'))
+			//Check if string is not whitespace (since we ignore whitespaces)
+			if(expressionString.charAt(i) != ' ')
 			{
-				throw new IllegalArgumentException();
-			}
-			token.append(expressionString.charAt(i));
-			//If the element is a number, then need to store the full number.
-			// not just an element of the number
-			if(Character.isDigit(expressionString.charAt(i)))
-			{
-				//Get the full number string
-				while(i<expressionString.length() && Character.isDigit(expressionString.charAt(i+1)))
+			//Check if there are invalid characters in the string 
+				if(!(Character.isDigit(expressionString.charAt(i)) || expressionString.charAt(i) == '(' || expressionString.charAt(i) == ')' || expressionString.charAt(i) =='+' || expressionString.charAt(i) =='-' || expressionString.charAt(i) == '*' || expressionString.charAt(i) == '/' || expressionString.charAt(i) =='[' || expressionString.charAt(i) ==']'))
 				{
-					token.append(expressionString.charAt(++i));
+					throw new IllegalArgumentException();
 				}
-			}
-			// Tokenize ++,--
-			if(expressionString.charAt(i) == '+')
-			{
-				if(expressionString.charAt(i+1) == '+')
+				token.append(expressionString.charAt(i));
+				//If the element is a number, then need to store the full number.
+				// not just an element of the number
+				if(Character.isDigit(expressionString.charAt(i)))
 				{
-					token.append(expressionString.charAt(++i));
+					//Get the full number string
+					while(i<expressionString.length() && Character.isDigit(expressionString.charAt(i+1)))
+					{
+						token.append(expressionString.charAt(++i));
+					}
 				}
-				//else if here?
-			}
-			if(expressionString.charAt(i) =='-')
-			{
-				if(expressionString.charAt(i+1) == '-')
+				// Tokenize ++,--
+				if(expressionString.charAt(i) == '+')
 				{
-					token.append(expressionString.charAt(++i));
+					if(expressionString.charAt(i+1) == '+')
+					{
+						token.append(expressionString.charAt(++i));
+					}
+					//else if here?
+					else if(expressionString.charAt(i+1) == '-' || expressionString.charAt(i+1) == '*' || expressionString.charAt(i+1) == '/')
+					{
+						throw new IllegalArgumentException();
+					}
 				}
-				//else if here?
-			}
-			// Convert to string and add to arraylist and empty the token
-			tokenList.add(token.toString());
-			token.delete(0,token.length());
+				if(expressionString.charAt(i) =='-')
+				{
+					if(expressionString.charAt(i+1) == '-')
+					{
+						token.append(expressionString.charAt(++i));
+					}
+					else if(expressionString.charAt(i+1) == '+' || expressionString.charAt(i+1) == '*' || expressionString.charAt(i+1) == '/')
+					{
+						throw new IllegalArgumentException();
+					}
+				}
+				// Convert to string and add to arraylist and empty the token
+				tokenList.add(token.toString());
+				token.delete(0,token.length());
+			} // end of if
 
-		}
+		} //end of for
 		//ADD YOUR CODE ABOVE HERE
 	}
 
@@ -89,16 +96,17 @@ public class Expression  {
 		// If a closing bracket is encountered, evaluate the expression, pop the necessary operators and values
 		// and push the evaluated value to the stack
 		// So, for (2 + 3 + (++3))
-		// Push (, 2, +, 3, +, ++, 3 into either of two stacks, then when ) is seen,
+		// Push  2, +, 3, +, ++, 3 into either of two stacks, then when ) is seen,
 		// evaluate ++3, pop from stack, store 4 on stack. For next ), evaluate 2+3+4 
 		// and pop from stack, push 9 to the value stack and return 9 by poping the only element left
 		// Reference: Please note I used the same form as Dijkstra's Shunting Yard Algorithm, which I saw in a 
-		// class previously.
+		// class once.
 		for(int i = 0;i < this.tokenList.size();i++)
 		{
-			if(this.tokenList.get(i).equals("(") || this.tokenList.get(i).equals("["))
-				continue; //do nothing since opening brackets are not stored on stack
-			else if (this.isInteger(tokenList.get(i)))
+			// this stack of if-else statements ignores the opening [
+			// and stores the closing ] as a string "abs" on the operatorStack
+			// It also ignores the ( and { opening brackets
+			if (this.isInteger(tokenList.get(i)))
 			{
 				//Push value to valueStack
 				valueStack.push(Integer.parseInt(this.tokenList.get(i)));
