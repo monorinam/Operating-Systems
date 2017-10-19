@@ -10,7 +10,7 @@
 // Input	:	Line to be encrypted (char* )
 //			:	key for encryption (-ve for left shift, +ve for right shift)
 // Output	:	The Caesar shifted string (printed to output)	
-int caesarshift(char* line, int key, char shifted[])
+int caesarshift(char line[], int key, char shifted[])
 {
 	int length;
 	int letter;
@@ -57,15 +57,22 @@ int caesarshift(char* line, int key, char shifted[])
 int main(void)
 {
 	//Note the line is a pointer because getline requires a pointer, not an array
-	char* line = NULL;
+	char* line_ptr = NULL;
 	size_t line_n = 0;
 	char encrypted[MAX_LEN];
 	char decrypted[MAX_LEN];
+	char line[MAX_LEN];
 	int key;
 	printf("Please enter a sentence (max 4096 words)\n");
-	if(getline(&line, &line_n, stdin) == -1 )
+	if(getline(&line_ptr, &line_n, stdin) == -1 )
 		perror("Error with gettting sentence");
 	else{
+		// Convert the line pointer to a line array, for consistency 
+		// and to meet specifications of assignment
+		for(int i = 0; i < strlen(line_ptr) && i < MAX_LEN; i++)
+		{
+			line[i] = line_ptr[i];
+		}
 		printf("Please enter the key for left shifting\n");
 		scanf("%d",&key);
 		printf("The original message \t %s \n",line);
