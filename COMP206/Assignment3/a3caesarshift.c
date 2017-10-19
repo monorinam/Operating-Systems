@@ -10,12 +10,11 @@
 // Input	:	Line to be encrypted (char* )
 //			:	key for encryption (-ve for left shift, +ve for right shift)
 // Output	:	The Caesar shifted string (printed to output)	
-int caesarshift(char* line, int key)
+int caesarshift(char* line, int key, char shifted[])
 {
 	int length;
 	int letter;
 	length = strlen(line);
-	char shifted[length];
 	char first_letter;
 	int newchar;
 
@@ -46,7 +45,6 @@ int caesarshift(char* line, int key)
 			shifted[i] = line[i];
 		}
 	}
-	printf("The encrypted line is \t %s \n",shifted);
 	return SUCCESS;
 
 }
@@ -55,8 +53,8 @@ int main(void)
 {
 	char* line = NULL;
 	size_t line_n = 0;
-	char* encrypted;
-	char* decrypted;
+	char encrypted[MAX_LEN];
+	char decrypted[MAX_LEN];
 	int key;
 	printf("Please enter a sentence (max 4096 words)\n");
 	if(getline(&line, &line_n, stdin) == -1 )
@@ -65,9 +63,9 @@ int main(void)
 		printf("Please enter the key for left shifting\n");
 		scanf("%d",&key);
 		printf("The original message \t %s \n",line);
-		if(caesarshift(line,(-1*key)) == ERROR)
-			perror("Encryption failed \n");
-		//if(decrypt(line, key) == ERROR);
-		//	perror("Decryption failed \n");
+		if(caesarshift(line,(-1*key),encrypted) != ERROR)
+			printf("The encrypted line is \t %s \n",encrypted);
+		if(caesarshift(encrypted,key,decrypted) != ERROR)
+			printf("The decrypted line is \t %s \n",decrypted);
 	}
 }
