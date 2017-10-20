@@ -4,6 +4,7 @@
 #define MAX_LEN 4096 //max length of sentence
 #define ERROR -1 //error code
 #define SUCCESS 0
+#define MAX_TRY 5 //Ask for inputs a max of 5 times
 // encryption and decryption method 
 // This method does the caesar shift in both directions
 // For encryption (with left shift) key must be negative
@@ -66,19 +67,38 @@ int main(void)
 	char encrypted[MAX_LEN];
 	char decrypted[MAX_LEN];
 	int key;
+	int trials;
 	
 	// Get the sentence
+	trials = 0;
 	printf("Please enter a sentence (max 4096 words)\n");
-	if(fgets(line, MAX_LEN, stdin) == NULL )
-		printf("Error with gettting sentence\n");
+	while(fgets(line, MAX_LEN, stdin) == NULL && trials < MAX_TRY )
+	{
+		printf("Error with gettting sentence, try again.\n Please enter a sentence (max 4096 words) \n");
+		trials = trials + 1;
+	}
+	if(trials == MAX_TRY)
+		printf("Maximum tries reached, terminating");
+
 	else
 	{
-		// Get the key
-		printf("Please enter the key for left shifting\n");
-		scanf("%d",&key);
+		
+		trials = 0;
+		// Get key 
 		// Check key is correct
-		if(key>25 || key < 0)
-			printf("The key value is wrong! You entered %d ,Key should be between 1 and 25\n",key);
+		do
+		{
+			if(trials > 0)
+			{
+				printf("The key value is wrong! You entered %d ,Key should be between 1 and 25\n",key);	
+			}
+			printf("Please enter the key for left shifting\n");
+			scanf("%d",&key);
+			trials = trials + 1;
+			
+		} while((key>25 || key < 0) && trials < MAX_TRY);
+		if(trials == MAX_TRY)
+			printf("Maximum tries reached, terminated. \n");
 		else
 		{
 			//Display original message
