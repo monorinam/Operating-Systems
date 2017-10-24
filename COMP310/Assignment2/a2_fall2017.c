@@ -5,12 +5,15 @@ Name: Monorina Mukhopadhyay (260364335)
 */
 
 #include <stdio.h>
+#include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
 #include <fcntl.h>
 #include <sys/shm.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
+#include <semaphore.h>
+
 #define FAILURE 1
 #define SUCCESS 0
 #define MAX_OPTIONS 50
@@ -26,12 +29,13 @@ int status[TOTALTABLES]; //"AVAILABLE or UNAVAILABLE"
 
 }reservation;
 reservation* reserve_db;
-sem_t mutex;  // controls access to rc (the reader count)
-sem_t db;    // controls access to database
-sem_t order; // this is the mutex to remember order of requests for read/write
+sem_t *mutex;  // controls access to rc (the reader count)
+sem_t *db;    // controls access to database
+sem_t *order; // this is the mutex to remember order of requests for read/write
 			 // this does fifo service for both readers and writers
 			// to stop the writers from starving if an endless stream of readers arrive
 int rc = 0; // the reader count
+//int initdone = 0; // Indicates if the db is already initialized or not, also controlled by mutex
 //Shared memory functions
 
 //Command functions
@@ -58,7 +62,7 @@ int init_database()
 	// Map shared memory into address space of process
 
 	reserve_db = mmap(0,sizeof(reservation), PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
-	if (reserve_db_ptr == MAP_FAILED) {
+	if (reserve_db == MAP_FAILED) {
 		printf("Map failed\n");
 		exit(-1);
 	}
@@ -69,9 +73,9 @@ int init_database()
 	order = sem_open("order", O_CREAT,0666,1);
 	// Now initialize the database
 	//down db
-	sem_wait(&order);
-	sem_wait(&db);
-	sem_post(&order); // signal the order mutex since this write has been served and has db access
+	sem_wait(order);
+	sem_wait(db);
+	sem_post(order); // signal the order mutex since this write has been served and has db access
 	/* DB ACCESS TO INIT
 	*/
 	printf("Initializing database.....\n");
@@ -88,13 +92,13 @@ int init_database()
 			reserve_db->section[i] = 'B';
 		}
 	}
-	sem_post(&db);
+	sem_post(db);
 	return SUCCESS;
 	//up db
 
 }
 //Write the the database
-int reserve(char *args[], int cnt)
+int reserve(char **args, int cnt)
 {
 	//Check to see arguments are valid
 	char* name;
@@ -113,8 +117,8 @@ int reserve(char *args[], int cnt)
 		// from being overwritten
 		// This segment is reused from Assignment 1 submission shell.c
 		char** arg_copy;
-		arg_copy = malloc(cmd_length*sizeof(args));
-		for(int i = 0; i < cmd_length; i++)
+		arg_copy = malloc(cnt*sizeof(args));
+		for(int i = 0; i < cnt; i++)
 		{
 			arg_copy[i] = strdup(args[i]);
 		}
@@ -125,34 +129,35 @@ int reserve(char *args[], int cnt)
 			section = 2;
 		if(cnt == 4)
 		{
-			table = section*100 + atoi(arg_copy[3]);
+			table = atoi(arg_copy[3]);
+			printf("Section %d Table %d\n",section,table);
 		}
 		else
 			table = 0;
 		//Write region
-		sem_wait(&order);
-		sem_wait(&db);
-		sem_post(&order);
-		for(int i = (section-1)*10;i<section*10;i++)
+		sem_wait(order);
+		sem_wait(db);
+		sem_post(order);
+		for(int i = (section-1)*10; i < section*10; i++)
 		{
 			//check if any table in section is available
-			if(table = 0 && reservation->status[i] = AVAILABLE)
+			if(table == 0 && reserve_db->status[i] == AVAILABLE)
 			{
-				reservation->name[i] = name;
-				reservation->status = UNAVAILABLE;
-				table = reservation->table_no[i];
+				reserve_db->name[i] = name;
+				reserve_db->status[i] = UNAVAILABLE;
+				table = reserve_db->table_no[i];
 				table_flag = 1;
 				break;
 			}
-			else if (reservation->table_no[i] == table)
+			else if (reserve_db->table_no[i] == table)
 			{
-				reservation->name[i] = name;
-				reservation->status = UNAVAILABLE;
+				reserve_db->name[i] = name;
+				reserve_db->status[i] = UNAVAILABLE;
 				table_flag = 1;
 				break;
 			}
 		}
-		sem_post(&db);
+		sem_post(db);
 		if(table_flag == 0)
 		{
 			printf("The table is unavailable, cannot be reserved\n Please enter another table number or section to reserve table \n");
@@ -163,34 +168,35 @@ int reserve(char *args[], int cnt)
 
 	}
 }
-int status(char *args[])
+int status()
 {
  // This is the reader function
  // Multiple readers can read from the same database
-	reservation reserve_temp = malloc(sizeof(reservation));
+	//reservation reserve_temp = malloc(sizeof(reservation));
 	char* section;
-	sem_wait(&order); //wait in queue to access reading
-	sem_wait(&mutex); // get access to rc
+	sem_wait(order); //wait in queue to access reading
+	sem_wait(mutex); // get access to rc
 	rc = rc + 1;
 	if(rc == 1)
-		sem_wait(&db);
-	sem_post(&order); //now have access to db so get out of queue
-	sem_post(&mutex); // give up access to rc since done updating
+		sem_wait(db);
+	sem_post(order); //now have access to db so get out of queue
+	sem_post(mutex); // give up access to rc since done updating
 	//Read database
 	// Ask: should I do a memcpy rather than directly reading memcpy(reserve_temp,reserve_db,)
 	for(int i = 0; i<TOTALTABLES;i++)
 	{
-		if(reserve_db->status==AVAILABLE)
+		if(reserve_db->status[i]==AVAILABLE)
 			printf("Table %d in section %c is available\n",reserve_db->table_no[i],reserve_db->section[i]);
-		else if(reserve_db->status == UNAVAILABLE)
-			printf("Table %d in section %s is already reserved by %s", reserve_db->table_no[i],reserve_db->section[i], reserve_db->name[i]);
+		else if(reserve_db->status[i] == UNAVAILABLE)
+			printf("Table %d in section %c is already reserved by %s", reserve_db->table_no[i],reserve_db->section[i], reserve_db->name[i]);
 	}
-	sem_wait(&mutex); // need to change rc again
+	sem_wait(mutex); // need to change rc again
 	// Since this reader is done
 	rc = rc - 1;
 	if(rc == 0)  // all readers are done so give up db access
-		sem_post(&db);
-	sem_post(&mutex); //updated rc done
+		sem_post(db);
+	sem_post(mutex); //updated rc done
+	return SUCCESS;
 
 
 
@@ -202,6 +208,8 @@ int getcmd(char *args[])
 {
 	char *line = NULL;
 	size_t linecap = 0;
+	int i = 0;
+	char *token;
 	printf(">>");
 	if(getline(&line,&linecap,stdin) <= 0)
 	{
@@ -234,9 +242,9 @@ int main(void)
 			if(!strcmp(args[0],"init"))
 				init_database();
 			else if(!strcmp(args[0],"reserve"))
-				reserve(args);
+				reserve(args, cnt);
 			else if(!strcmp(args[0],"status"))
-				show_status(args);
+				status();
 			else if(!strcmp(args[0],"exit"))
 			{	
 				printf("Exiting..\n");
