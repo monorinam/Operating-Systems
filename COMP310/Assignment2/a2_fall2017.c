@@ -42,11 +42,11 @@ int rc = 0; // the reader count
 //Initialize the database
 // Create the shared memory (or read it)
 //
-int init_database(char *name)
+int init_database()
 {
 	//initialize the shared memory
 	int shm_fd;
-	//char *name = "ReservationDBMM";
+	char *name = "ReservationDBMM";
 
 	/* create the shared memory segment */
 	shm_fd = shm_open(name, O_CREAT | O_RDWR, 0666); //Should it be just O_CREAT?
@@ -66,6 +66,11 @@ int init_database(char *name)
 		printf("Map failed\n");
 		exit(-1);
 	}
+
+	//temporary
+	sem_unlink("mutex");
+	sem_unlink("db");
+	sem_unlink("order");
 
 	// Create mutex and db variables to control access to shared memory
 	mutex = sem_open("mutex",O_CREAT,0666,1);
@@ -130,7 +135,6 @@ int reserve(char **args, int cnt)
 		if(cnt == 4)
 		{
 			table = atoi(arg_copy[3]);
-			printf("Section %d Table %d\n",section,table);
 		}
 		else
 			table = 0;
@@ -191,7 +195,7 @@ int status()
 		if(reserve_db->status[i]==AVAILABLE)
 			printf("Table %d in section %c is available\n",reserve_db->table_no[i],reserve_db->section[i]);
 		else if(reserve_db->status[i] == UNAVAILABLE)
-			printf("Table %d in section %c is already reserved by %s", reserve_db->table_no[i],reserve_db->section[i], reserve_db->name[i]);
+			printf("Table %d in section %c is already reserved by %s \n", reserve_db->table_no[i],reserve_db->section[i], reserve_db->name[i]);
 	}
 	sem_wait(mutex); // need to change rc again
 	// Since this reader is done
@@ -246,12 +250,15 @@ int main(void)
 			// if this is the first run of this loop
 			// for the process and if the first command
 			// is not init, then open the memory map for
+			
+			if(!strcmp(args[0],"init"))
+				init_database();
 			// reading (assumes the memory has been written)
-			if(strcmp(args[0],"init") &&  memopen_flag == 0)
+			else if(memopen_flag == 0) 
 			{
 				int shm_fd;
 				
-				sem_wait(db);
+				//sem_wait(db);
 				shm_fd = shm_open(name, O_RDONLY, 0666);
 				if (shm_fd == -1) {
 					printf("Database cannot be accessed\n");
@@ -259,17 +266,16 @@ int main(void)
 				}
 
 				/* now map the shared memory segment in the address space of the process */
-				reserve_db = mmap(0,SIZE, PROT_READ, MAP_SHARED, shm_fd, 0);
-				if (ptr == MAP_FAILED) {
+				reserve_db = mmap(0, sizeof(reservation), PROT_READ, MAP_SHARED, shm_fd, 0);
+				if (reserve_db == MAP_FAILED) {
 					printf("Database cannot be accessed \n");
 					exit(-1);
 				}
-				sem_post(db);
-				memopen_flag = 1;
+				//sem_post(db);
+				
 			}
-			if(!strcmp(args[0],"init"))
-				init_database(name);
-			else if(!strcmp(args[0],"reserve"))
+			
+			if(!strcmp(args[0],"reserve"))
 				reserve(args, cnt);
 			else if(!strcmp(args[0],"status"))
 				status();
@@ -278,6 +284,7 @@ int main(void)
 				printf("Exiting..\n");
 				exit(EXIT_SUCCESS);
 			}
+			memopen_flag = 1;
 		}
 	}
 }
