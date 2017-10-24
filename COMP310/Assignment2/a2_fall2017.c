@@ -21,13 +21,17 @@ Name: Monorina Mukhopadhyay (260364335)
 typedef struct reservation{
 char *name[TOTALTABLES];    // Names of persons getting tables, is NULL when table is available
 int table_no[TOTALTABLES];  // Goes from 100 to 110 and then 200 to 210
+char section[TOTALTABLES]; // The section (slightly redundant since we can get from the table #)
 int status[TOTALTABLES]; //"AVAILABLE or UNAVAILABLE"
 
 }reservation;
-sem_t mutex;
-sem_t db;
-int rc = 0;
-int wc = 0;
+reservation* reserve_db;
+sem_t mutex;  // controls access to rc (the reader count)
+sem_t db;    // controls access to database
+sem_t order; // this is the mutex to remember order of requests for read/write
+			 // this does fifo service for both readers and writers
+			// to stop the writers from starving if an endless stream of readers arrive
+int rc = 0; // the reader count
 //Shared memory functions
 
 //Command functions
@@ -53,7 +57,7 @@ int init_database()
 
 	// Map shared memory into address space of process
 
-	reserve_db_ptr = mmap(0,sizeof(reservation), PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
+	reserve_db = mmap(0,sizeof(reservation), PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
 	if (reserve_db_ptr == MAP_FAILED) {
 		printf("Map failed\n");
 		exit(-1);
@@ -62,23 +66,29 @@ int init_database()
 	// Create mutex and db variables to control access to shared memory
 	mutex = sem_open("mutex",O_CREAT,0666,1);
 	db = sem_open("db",O_CREAT,0666,1);
-
+	order = sem_open("order", O_CREAT,0666,1);
 	// Now initialize the database
 	//down db
-	sem_wait(db);
+	sem_wait(&order);
+	sem_wait(&db);
+	sem_post(&order); // signal the order mutex since this write has been served and has db access
+	/* DB ACCESS TO INIT
+	*/
 	printf("Initializing database.....\n");
 	for(int i = 0;i<TOTALTABLES;i++)
 	{
-		reservation->name[i] = NULL;
-		reservation->status[i] = AVAILABLE;
+		reserve_db->name[i] = NULL;
+		reserve_db->status[i] = AVAILABLE;
 		if(i<10){
-			reservation->table_no[i] = 100+(i+1);
+			reserve_db->table_no[i] = 100+(i+1);
+			reserve_db->section[i] = 'A';
 		}
 		else{
-			reservation->table_no[i]= 200+(i-10 + 1);
+			reserve_db->table_no[i]= 200+(i-10 + 1);
+			reserve_db->section[i] = 'B';
 		}
 	}
-	sem_post(db);
+	sem_post(&db);
 	return SUCCESS;
 	//up db
 
@@ -120,7 +130,9 @@ int reserve(char *args[], int cnt)
 		else
 			table = 0;
 		//Write region
-		sem_wait(db);
+		sem_wait(&order);
+		sem_wait(&db);
+		sem_post(&order);
 		for(int i = (section-1)*10;i<section*10;i++)
 		{
 			//check if any table in section is available
@@ -132,7 +144,7 @@ int reserve(char *args[], int cnt)
 				table_flag = 1;
 				break;
 			}
-			else if (reservation->table_no[i] = table)
+			else if (reservation->table_no[i] == table)
 			{
 				reservation->name[i] = name;
 				reservation->status = UNAVAILABLE;
@@ -140,7 +152,7 @@ int reserve(char *args[], int cnt)
 				break;
 			}
 		}
-		sem_post(db);
+		sem_post(&db);
 		if(table_flag == 0)
 		{
 			printf("The table is unavailable, cannot be reserved\n Please enter another table number or section to reserve table \n");
@@ -153,8 +165,37 @@ int reserve(char *args[], int cnt)
 }
 int status(char *args[])
 {
-	
+ // This is the reader function
+ // Multiple readers can read from the same database
+	reservation reserve_temp = malloc(sizeof(reservation));
+	char* section;
+	sem_wait(&order); //wait in queue to access reading
+	sem_wait(&mutex); // get access to rc
+	rc = rc + 1;
+	if(rc == 1)
+		sem_wait(&db);
+	sem_post(&order); //now have access to db so get out of queue
+	sem_post(&mutex); // give up access to rc since done updating
+	//Read database
+	// Ask: should I do a memcpy rather than directly reading memcpy(reserve_temp,reserve_db,)
+	for(int i = 0; i<TOTALTABLES;i++)
+	{
+		if(reserve_db->status==AVAILABLE)
+			printf("Table %d in section %c is available\n",reserve_db->table_no[i],reserve_db->section[i]);
+		else if(reserve_db->status == UNAVAILABLE)
+			printf("Table %d in section %s is already reserved by %s", reserve_db->table_no[i],reserve_db->section[i], reserve_db->name[i]);
+	}
+	sem_wait(&mutex); // need to change rc again
+	// Since this reader is done
+	rc = rc - 1;
+	if(rc == 0)  // all readers are done so give up db access
+		sem_post(&db);
+	sem_post(&mutex); //updated rc done
+
+
+
 }
+
 // This function is a modified version of the getcmd function
 // given to us in Assignment 1, COMP 310 2017.
 int getcmd(char *args[])
