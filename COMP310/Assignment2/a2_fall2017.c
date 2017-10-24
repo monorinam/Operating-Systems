@@ -27,7 +27,7 @@ int table_no[TOTALTABLES];  // Goes from 100 to 110 and then 200 to 210
 char section[TOTALTABLES]; // The section (slightly redundant since we can get from the table #)
 int status[TOTALTABLES]; //"AVAILABLE or UNAVAILABLE"
 
-}reservation;
+}reservation; //extra to indicate init
 reservation* reserve_db;
 sem_t *mutex;  // controls access to rc (the reader count)
 sem_t *db;    // controls access to database
@@ -42,11 +42,11 @@ int rc = 0; // the reader count
 //Initialize the database
 // Create the shared memory (or read it)
 //
-int init_database()
+int init_database(char *name)
 {
 	//initialize the shared memory
 	int shm_fd;
-	char *name = "ReservationDBMM";
+	//char *name = "ReservationDBMM";
 
 	/* create the shared memory segment */
 	shm_fd = shm_open(name, O_CREAT | O_RDWR, 0666); //Should it be just O_CREAT?
@@ -134,6 +134,9 @@ int reserve(char **args, int cnt)
 		}
 		else
 			table = 0;
+		//Check if the table being requested is a valid table
+		if(!((table>=101 && table <= 110) || (table >= 201 && table <= 210)))
+			printf("Table does not exist, please request again with a valid table number \n");
 		//Write region
 		sem_wait(order);
 		sem_wait(db);
@@ -230,7 +233,8 @@ int getcmd(char *args[])
 }
 int main(void)
 {
-	pid_t process_child_id;
+	int memopen_flag = 0;
+	char *name = "ReservationDBMM";
 	while(1)
 	{
 		// Get command here
@@ -239,8 +243,32 @@ int main(void)
 		cnt = getcmd(args);
 		if(cnt >= 1)
 		{
+			// if this is the first run of this loop
+			// for the process and if the first command
+			// is not init, then open the memory map for
+			// reading (assumes the memory has been written)
+			if(strcmp(args[0],"init") &&  memopen_flag == 0)
+			{
+				int shm_fd;
+				
+				sem_wait(db);
+				shm_fd = shm_open(name, O_RDONLY, 0666);
+				if (shm_fd == -1) {
+					printf("Database cannot be accessed\n");
+					exit(-1);
+				}
+
+				/* now map the shared memory segment in the address space of the process */
+				reserve_db = mmap(0,SIZE, PROT_READ, MAP_SHARED, shm_fd, 0);
+				if (ptr == MAP_FAILED) {
+					printf("Database cannot be accessed \n");
+					exit(-1);
+				}
+				sem_post(db);
+				memopen_flag = 1;
+			}
 			if(!strcmp(args[0],"init"))
-				init_database();
+				init_database(name);
 			else if(!strcmp(args[0],"reserve"))
 				reserve(args, cnt);
 			else if(!strcmp(args[0],"status"))
