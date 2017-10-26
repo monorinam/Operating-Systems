@@ -86,7 +86,7 @@ int init_database()
 	printf("Initializing database.....\n");
 	for(int i = 0;i<TOTALTABLES;i++)
 	{
-		reserve_db->name[i] = NULL;
+		reserve_db->name[i] = "INITIALIZED";
 		reserve_db->status[i] = AVAILABLE;
 		if(i<10){
 			reserve_db->table_no[i] = 100+(i+1);
@@ -150,7 +150,7 @@ int reserve(char **args, int cnt)
 			//check if any table in section is available
 			if(table == 0 && reserve_db->status[i] == AVAILABLE)
 			{
-				reserve_db->name[i] = name;
+				reserve_db->name[i] = strdup(name);
 				reserve_db->status[i] = UNAVAILABLE;
 				table = reserve_db->table_no[i];
 				table_flag = 1;
@@ -195,7 +195,7 @@ int status()
 		if(reserve_db->status[i]==AVAILABLE)
 			printf("Table %d in section %c is available\n",reserve_db->table_no[i],reserve_db->section[i]);
 		else if(reserve_db->status[i] == UNAVAILABLE)
-			printf("Table %d in section %c is already reserved by %s \n", reserve_db->table_no[i],reserve_db->section[i], reserve_db->name[i]);
+			printf("Table %d in section %c is already reserved by %s  \n", reserve_db->table_no[i],reserve_db->section[i], reserve_db->name[i]);
 	}
 	sem_wait(mutex); // need to change rc again
 	// Since this reader is done
@@ -271,6 +271,9 @@ int main(void)
 					printf("Database cannot be accessed \n");
 					exit(-1);
 				}
+				mutex = sem_open("mutex",O_RDWR,0666,1);
+				db = sem_open("db",O_RDWR,0666,1);
+				order = sem_open("order",O_RDWR,0666,1);
 				//sem_post(db);
 				
 			}
