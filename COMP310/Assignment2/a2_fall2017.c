@@ -20,9 +20,10 @@ Name: Monorina Mukhopadhyay (260364335)
 #define TOTALTABLES 20
 #define AVAILABLE 1
 #define UNAVAILABLE 2
+#define MAX_NAME_LENGTH 1024
 // Struct to store the reservations
 typedef struct reservation{
-char *name[TOTALTABLES];    // Names of persons getting tables, is NULL when table is available
+char name[TOTALTABLES][MAX_NAME_LENGTH];    // Names of persons getting tables, is NULL when table is available
 int table_no[TOTALTABLES];  // Goes from 100 to 110 and then 200 to 210
 char section[TOTALTABLES]; // The section (slightly redundant since we can get from the table #)
 int status[TOTALTABLES]; //"AVAILABLE or UNAVAILABLE"
@@ -86,7 +87,7 @@ int init_database()
 	printf("Initializing database.....\n");
 	for(int i = 0;i<TOTALTABLES;i++)
 	{
-		reserve_db->name[i] = "INITIALIZED";
+		strcpy(reserve_db->name[i] ,"INITIALIZED");
 		reserve_db->status[i] = AVAILABLE;
 		if(i<10){
 			reserve_db->table_no[i] = 100+(i+1);
@@ -150,16 +151,16 @@ int reserve(char **args, int cnt)
 			//check if any table in section is available
 			if(table == 0 && reserve_db->status[i] == AVAILABLE)
 			{
-				reserve_db->name[i] = strdup(name);
 				reserve_db->status[i] = UNAVAILABLE;
+				strcpy(reserve_db->name[i],name);
 				table = reserve_db->table_no[i];
 				table_flag = 1;
 				break;
 			}
 			else if (reserve_db->table_no[i] == table)
 			{
-				reserve_db->name[i] = name;
 				reserve_db->status[i] = UNAVAILABLE;
+				strcpy(reserve_db->name[i],name);
 				table_flag = 1;
 				break;
 			}
@@ -259,14 +260,14 @@ int main(void)
 				int shm_fd;
 				
 				//sem_wait(db);
-				shm_fd = shm_open(name, O_RDONLY, 0666);
+				shm_fd = shm_open(name, O_RDWR, 0666);
 				if (shm_fd == -1) {
 					printf("Database cannot be accessed\n");
 					exit(-1);
 				}
 
 				/* now map the shared memory segment in the address space of the process */
-				reserve_db = mmap(0, sizeof(reservation), PROT_READ, MAP_SHARED, shm_fd, 0);
+				reserve_db = mmap(0,sizeof(reservation), PROT_READ|PROT_WRITE, MAP_SHARED, shm_fd, 0);
 				if (reserve_db == MAP_FAILED) {
 					printf("Database cannot be accessed \n");
 					exit(-1);
