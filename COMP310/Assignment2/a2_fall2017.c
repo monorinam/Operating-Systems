@@ -71,9 +71,6 @@ int init_database()
 
 	//Unlink mutexes to ensure
 	// crashed code does not affect this
-	sem_unlink("mutex");
-	sem_unlink("db");
-	sem_unlink("order");
 
 	// Create mutex and db variables to control access to shared memory
 	mutex = sem_open("mutex",O_CREAT,0666,1);
@@ -246,6 +243,7 @@ int getcmd(char *args[], int fileflag, FILE *fileID)
 	{
 		if(getline(&line,&linecap,fileID) <= 0)
 		{
+			free(line);
 			return -1;
 		}
 	}
@@ -257,9 +255,14 @@ int getcmd(char *args[], int fileflag, FILE *fileID)
         if (strlen(token) > 0)
             args[i++] = token;
     }
-    if(i == 0) {
+    //if(i == 0) {
+    if(i == 0)
+    {
     	free(l);
     }
+    free(line);
+    //free(fileID);
+    //}
     return i;
 }
 int parse_sentence(int memopen_flag, char *args[], int cnt)
@@ -338,6 +341,8 @@ int main(int argc, char *argv[])
 		{
 			// file is done reading
 			printf("Finished parsing file commands \n Exiting .... \n");
+			//free(args[0]);
+			//free(fileID);
 			exit(SUCCESS);
 		}
 
