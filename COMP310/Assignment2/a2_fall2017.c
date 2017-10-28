@@ -86,7 +86,8 @@ int init_database()
 	sem_post(order); // signal the order mutex since this write has been served and has db access
 	/* DB ACCESS TO INIT
 	*/
-	printf("Initializing database.....\n");
+	printf("This process has acquired memory lock to write..\n");
+    printf("Initializing database.....\n");
 	for(int i = 0;i<TOTALTABLES;i++)
 	{
 		strcpy(reserve_db->name[i] ,"INITIALIZED");
@@ -101,7 +102,9 @@ int init_database()
 		}
 	}
 	sem_post(db);
+    printf("This process has released memory lock \n");
 	return SUCCESS;
+
 	//up db
 
 }
@@ -113,8 +116,6 @@ int reserve(char **args, int cnt)
 	int table;
 	int section;
 	int table_flag = 0;
-	time_t now;
-	srand((unsigned int) (time(&now)));
 	if(cnt !=3 && cnt != 4)
 	{
 		printf("Wrong arguments, please use form reserve <name> <section> <table number(optional)> ");
@@ -140,19 +141,18 @@ int reserve(char **args, int cnt)
 		if(cnt == 4)
 		{
 			table = atoi(arg_copy[3]);
+			//Check if the table being requested is a valid table
+			if(!((table>=101 && table <= 110) || (table >= 201 && table <= 210)))
+				printf("Table does not exist, please request again with a valid table number \n");
 		}
 		else
 			table = 0;
-		//Check if the table being requested is a valid table
-		if(!((table>=101 && table <= 110) || (table >= 201 && table <= 210)))
-			printf("Table does not exist, please request again with a valid table number \n");
+		
 		//Write region
 		sem_wait(order);
 		sem_wait(db);
 		sem_post(order);
-		int w,rem;
-		w = rand() % 10;
-		rem=sleep(w);
+        printf("This process has acquired memory lock");//TODO:DELETE
 		for(int i = (section-1)*10; i < section*10; i++)
 		{
 			//check if any table in section is available
@@ -164,7 +164,7 @@ int reserve(char **args, int cnt)
 				table_flag = 1;
 				break;
 			}
-			else if (reserve_db->table_no[i] == table)
+			else if (reserve_db->table_no[i] == table && reserve_db->status[i] == AVAILABLE)
 			{
 				reserve_db->status[i] = UNAVAILABLE;
 				strcpy(reserve_db->name[i],name);
@@ -173,6 +173,7 @@ int reserve(char **args, int cnt)
 			}
 		}
 		sem_post(db);
+        printf("This process has released memory lock\n");//TODO:DELETE
 		if(table_flag == 0)
 		{
 			printf("The table is unavailable, cannot be reserved\n Please enter another table number or section to reserve table \n");
@@ -188,8 +189,6 @@ int status()
  // This is the reader function
  // Multiple readers can read from the same database
 	//reservation reserve_temp = malloc(sizeof(reservation));
-	time_t now;
-	srand((unsigned int) (time(&now)));
 	char* section;
 	sem_wait(order); //wait in queue to access reading
 	sem_wait(mutex); // get access to rc
@@ -200,9 +199,7 @@ int status()
 	sem_post(mutex); // give up access to rc since done updating
 	//Read database
 
-	int w,rem;
-	w = rand() % 10;
-	rem=sleep(w);
+    printf("This procese has acquired lock to read \n");//TODO:DELETE	
 	// Ask: should I do a memcpy rather than directly reading memcpy(reserve_temp,reserve_db,)
 	for(int i = 0; i<TOTALTABLES;i++)
 	{
@@ -217,6 +214,7 @@ int status()
 	if(rc == 0)  // all readers are done so give up db access
 		sem_post(db);
 	sem_post(mutex); //updated rc done
+    printf("This process has released read lock \n");//TODO:DELETE
 	return SUCCESS;
 
 
@@ -225,16 +223,28 @@ int status()
 
 // This function is a modified version of the getcmd function
 // given to us in Assignment 1, COMP 310 2017.
-int getcmd(char *args[])
+int getcmd(char *args[], int fileflag, FILE *fileID)
 {
+
 	char *line = NULL;
 	size_t linecap = 0;
 	int i = 0;
 	char *token;
-	printf(">>");
-	if(getline(&line,&linecap,stdin) <= 0)
+	
+	if(fileflag == 0)
 	{
-		exit(-1);
+		printf(">>");
+		if(getline(&line,&linecap,stdin) <= 0)
+		{
+			exit(-1);
+		}	
+	}
+	else
+	{
+		if(getline(&line,&linecap,fileID) <= 0)
+		{
+			return -1;
+		}
 	}
 	char *l = line;
     while ((token = strsep(&line, " \t\n")) != NULL) {
@@ -249,59 +259,91 @@ int getcmd(char *args[])
     }
     return i;
 }
-int main(void)
+int parse_sentence(int memopen_flag, char *args[], int cnt)
+{
+	
+	char *name = "ReservationDBMM";
+	// if this is the first run of this loop
+	// for the process and if the first command
+	// is not init, then open the memory map for
+	if(!strcmp(args[0],"init"))
+		init_database();
+	// reading (assumes the memory has been written)
+	else if(memopen_flag == 0) 
+	{
+		int shm_fd;
+		
+		//sem_wait(db);
+		shm_fd = shm_open(name, O_RDWR, 0666);
+		if (shm_fd == -1) {
+			printf("Database cannot be accessed\n");
+			exit(-1);
+		}
+
+		/* now map the shared memory segment in the address space of the process */
+		reserve_db = mmap(0,sizeof(reservation), PROT_READ|PROT_WRITE, MAP_SHARED, shm_fd, 0);
+		if (reserve_db == MAP_FAILED) {
+			printf("Database cannot be accessed \n");
+			exit(-1);
+		}
+		mutex = sem_open("mutex",O_RDWR,0666,1);
+		db = sem_open("db",O_RDWR,0666,1);
+		order = sem_open("order",O_RDWR,0666,1);
+		//sem_post(db);
+		
+	}
+	
+	if(!strcmp(args[0],"reserve"))
+		reserve(args, cnt);
+	else if(!strcmp(args[0],"status"))
+		status();
+	else if(!strcmp(args[0],"exit"))
+	{	
+		printf("Exiting..\n");
+		exit(EXIT_SUCCESS);
+	}
+	return SUCCESS;
+
+}
+int main(int argc, char *argv[])
 {
 	int memopen_flag = 0;
-	char *name = "ReservationDBMM";
+	int fileflag = 0;
+	FILE *fileID;
+	//File reading
+	if(argc > 1)
+	{
+		// file reading stuff goes here
+		fileflag = 1;
+		//find number of lines in file
+		fileID = fopen(argv[1],"r");
+		//TODO:ERROR CHECKING
+	} //end of file reading if
+	
+	//This is the command line interface 
+	// infinite loop for reservation commands
 	while(1)
 	{
 		// Get command here
 		char *args[MAX_OPTIONS];
 		int cnt;
-		cnt = getcmd(args);
+		if(fileflag == 0)
+			cnt = getcmd(args, fileflag , NULL);
+		else
+			cnt = getcmd(args, fileflag, fileID);
+		if(cnt == -1 && argc > 1)
+		{
+			// file is done reading
+			printf("Finished parsing file commands \n Exiting .... \n");
+			exit(SUCCESS);
+		}
+
 		if(cnt >= 1)
 		{
-			// if this is the first run of this loop
-			// for the process and if the first command
-			// is not init, then open the memory map for
-			
-			if(!strcmp(args[0],"init"))
-				init_database();
-			// reading (assumes the memory has been written)
-			else if(memopen_flag == 0) 
-			{
-				int shm_fd;
-				
-				//sem_wait(db);
-				shm_fd = shm_open(name, O_RDWR, 0666);
-				if (shm_fd == -1) {
-					printf("Database cannot be accessed\n");
-					exit(-1);
-				}
-
-				/* now map the shared memory segment in the address space of the process */
-				reserve_db = mmap(0,sizeof(reservation), PROT_READ|PROT_WRITE, MAP_SHARED, shm_fd, 0);
-				if (reserve_db == MAP_FAILED) {
-					printf("Database cannot be accessed \n");
-					exit(-1);
-				}
-				mutex = sem_open("mutex",O_RDWR,0666,1);
-				db = sem_open("db",O_RDWR,0666,1);
-				order = sem_open("order",O_RDWR,0666,1);
-				//sem_post(db);
-				
-			}
-			
-			if(!strcmp(args[0],"reserve"))
-				reserve(args, cnt);
-			else if(!strcmp(args[0],"status"))
-				status();
-			else if(!strcmp(args[0],"exit"))
-			{	
-				printf("Exiting..\n");
-				exit(EXIT_SUCCESS);
-			}
-			memopen_flag = 1;
-		}
-	}
-}
+			parse_sentence(memopen_flag,args, cnt);
+			if(memopen_flag == 0)
+				memopen_flag = 1;
+		} //end if if (cnt)
+	} //end of while
+ //end of if
+} //end of main
