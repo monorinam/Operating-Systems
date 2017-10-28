@@ -13,6 +13,7 @@ Name: Monorina Mukhopadhyay (260364335)
 #include <sys/stat.h>
 #include <sys/mman.h>
 #include <semaphore.h>
+#include <time.h>
 
 #define FAILURE 1
 #define SUCCESS 0
@@ -68,7 +69,8 @@ int init_database()
 		exit(-1);
 	}
 
-	//temporary
+	//Unlink mutexes to ensure
+	// crashed code does not affect this
 	sem_unlink("mutex");
 	sem_unlink("db");
 	sem_unlink("order");
@@ -111,6 +113,8 @@ int reserve(char **args, int cnt)
 	int table;
 	int section;
 	int table_flag = 0;
+	time_t now;
+	srand((unsigned int) (time(&now)));
 	if(cnt !=3 && cnt != 4)
 	{
 		printf("Wrong arguments, please use form reserve <name> <section> <table number(optional)> ");
@@ -146,6 +150,9 @@ int reserve(char **args, int cnt)
 		sem_wait(order);
 		sem_wait(db);
 		sem_post(order);
+		int w,rem;
+		w = rand() % 10;
+		rem=sleep(w);
 		for(int i = (section-1)*10; i < section*10; i++)
 		{
 			//check if any table in section is available
@@ -181,6 +188,8 @@ int status()
  // This is the reader function
  // Multiple readers can read from the same database
 	//reservation reserve_temp = malloc(sizeof(reservation));
+	time_t now;
+	srand((unsigned int) (time(&now)));
 	char* section;
 	sem_wait(order); //wait in queue to access reading
 	sem_wait(mutex); // get access to rc
@@ -190,6 +199,10 @@ int status()
 	sem_post(order); //now have access to db so get out of queue
 	sem_post(mutex); // give up access to rc since done updating
 	//Read database
+
+	int w,rem;
+	w = rand() % 10;
+	rem=sleep(w);
 	// Ask: should I do a memcpy rather than directly reading memcpy(reserve_temp,reserve_db,)
 	for(int i = 0; i<TOTALTABLES;i++)
 	{
