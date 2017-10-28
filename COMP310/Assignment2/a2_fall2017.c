@@ -112,7 +112,6 @@ int init_database()
 int reserve(char **args, int cnt)
 {
 	//Check to see arguments are valid
-	char* name;
 	int table;
 	int section;
 	int table_flag = 0;
@@ -127,23 +126,26 @@ int reserve(char **args, int cnt)
 		// de-reference the cmd pointer to prevent the command name in the linked list
 		// from being overwritten
 		// This segment is reused from Assignment 1 submission shell.c
-		char** arg_copy;
-		arg_copy = malloc(cnt*sizeof(args));
+		/**char** arg_copy = malloc(cnt*sizeof(args));
 		for(int i = 0; i < cnt; i++)
 		{
 			arg_copy[i] = strdup(args[i]);
 		}
-		name = arg_copy[1];
-		if(!strcmp(arg_copy[2],"A"))
+		*/
+		if(!strcmp(args[2],"A"))
 			section = 1;
 		else
 			section = 2;
 		if(cnt == 4)
 		{
-			table = atoi(arg_copy[3]);
+			table = atoi(args[3]);
 			//Check if the table being requested is a valid table
 			if(!((table>=101 && table <= 110) || (table >= 201 && table <= 210)))
+			{
 				printf("Table does not exist, please request again with a valid table number \n");
+				//free(arg_copy);
+				return FAILURE;
+			}
 		}
 		else
 			table = 0;
@@ -159,7 +161,7 @@ int reserve(char **args, int cnt)
 			if(table == 0 && reserve_db->status[i] == AVAILABLE)
 			{
 				reserve_db->status[i] = UNAVAILABLE;
-				strcpy(reserve_db->name[i],name);
+				strcpy(reserve_db->name[i],args[1]);
 				table = reserve_db->table_no[i];
 				table_flag = 1;
 				break;
@@ -167,12 +169,13 @@ int reserve(char **args, int cnt)
 			else if (reserve_db->table_no[i] == table && reserve_db->status[i] == AVAILABLE)
 			{
 				reserve_db->status[i] = UNAVAILABLE;
-				strcpy(reserve_db->name[i],name);
+				strcpy(reserve_db->name[i],args[1]);
 				table_flag = 1;
 				break;
 			}
 		}
 		sem_post(db);
+		//free(arg_copy);
         printf("This process has released memory lock\n");//TODO:DELETE
 		if(table_flag == 0)
 		{
@@ -344,6 +347,12 @@ int main(int argc, char *argv[])
 			if(memopen_flag == 0)
 				memopen_flag = 1;
 		} //end if if (cnt)
+		free(args[0]);
+		for (int i = 0; i < cnt; i++)
+		{
+			args[i] = NULL;
+		}
+
 	} //end of while
  //end of if
 } //end of main
