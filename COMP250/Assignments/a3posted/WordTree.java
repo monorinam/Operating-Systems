@@ -31,8 +31,21 @@ public class WordTree
 	public void insert(String word)
 	{
 		//  ADD YOUR CODE BELOW HERE
+		// Check if the word exists in the tree
+		// Use the string version of the prefix to get prefix length
+		String prefix_string = this.getPrefix(word);
+		WordTreeNode prefix_node = this.getPrefixNode(word);
+		if(prefix_string.length() < word.length())
+		{
+			//the words are not equal, and nodes need to be added
+			for(int i = prefix_string.length(); i < word.length(); i++)
+			{
+				// Create a childnode and step to the created node
+				prefix_node = prefix_node.createChild(word.charAt(i));
+			}
 
-
+		}
+		
 		//  ADD YOUR ABOVE HERE
 	}
 
@@ -73,6 +86,8 @@ public class WordTree
 
 			// move down the tree
 		}
+		// this is the end of a word
+		this.setEndOfWord(true);
 
 		   //return null;  //  REPLACE THIS STUB
 		
@@ -97,8 +112,19 @@ public class WordTree
 	public boolean contains(String word)
 	{  
 		//   ADD YOUR CODE BELOW HERE
-
-		return false;   // REMOVE THIS STUB
+		WordTreeNode prefix_node = this.getPrefixNode(word);
+		// Check if the prefix exists at all
+		if(prefix_node == null)
+			return false;
+		// compare the two strings
+		/*
+		Checking for
+			- Length of word is same as length of prefix
+			- the last word is the end of a word
+		*/
+		if(this.getPrefix(word).length() == word.length() && prefix_node.isEndOfWord())
+			return true;
+		return false;   
 		
 		//   ADD YOUR CODE ABOVE HERE
 	}
