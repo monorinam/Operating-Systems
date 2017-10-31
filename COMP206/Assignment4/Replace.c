@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #define MAX_LEN 1000 //max length of sentence
 #define ERROR -1 //error code
 #define SUCCESS 0
@@ -91,19 +92,29 @@ void Replace(char *name, char *newname, char record[])
       i = i + 1;
       j = j + 1;
     }
+    //*(record + i) = '\n';
     
 }
 void SaveRecord(char *filename, char *name, char record[])
 {
 
-    FILE *fileID = fopen(filename, "r+");
+    FILE *fileID = fopen(filename, "r");
     char *line = malloc(MAX_LEN*sizeof(char));
+    int fileLength;
+    int temp;
+    fseek(fileID, 0, SEEK_END);
+    fileLength = ftell(fileID);
+    fseek(fileID, 0, SEEK_SET);
+    char *fileBufferBefore = malloc(fileLength*sizeof(char));
+    char *fileBufferAfter = malloc(fileLength*sizeof(char));
+    int switch_buffers = 0;
     if (fileID == NULL)
       perror("The file could not be opened \n");
     else
     {
       //if the line matches
       //replace with new record
+      int j = 0;
       while(fgets(line, MAX_LEN - 1, fileID) != NULL)
       {
         int equal_flag = 0;
@@ -115,8 +126,42 @@ void SaveRecord(char *filename, char *name, char record[])
             i = i + 1;
         } //end of while
         if(equal_flag == 0)
-          fputs(record,fileID);
+        {
+          switch_buffers = 1;
+          j = 1;
+          *fileBufferAfter='\n';
+        }
+        if(!switch_buffers)
+        {
+          *(fileBufferBefore + j) = *line;
+          temp = j;
+          while(*(fileBufferBefore + j) != '\n')
+          {
+            j = j + 1;
+            *(fileBufferBefore + j) = *(line + j - temp);
+          }
+          j = j + 1;
+        }
+        else if (equal_flag == 1)
+        {
+          temp = j;
+          *(fileBufferAfter + j) = *(line);
+          while(*(fileBufferAfter + j) != '\n')
+          {
+            j = j + 1;
+            *(fileBufferAfter + j) = *(line + j - temp);
+          }
+          j = j + 1;
+        }
+        //j = j + 1;
       }
+      //Rewrite file
+      //Reopen file for writing
+      fileID = fopen(filename, "w");
+      fputs(fileBufferBefore, fileID);
+      fputs(record, fileID);
+      //fputs('\n', fileID);
+      fputs(fileBufferAfter, fileID);
     }
 }
 int main(void)
