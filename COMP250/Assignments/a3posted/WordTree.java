@@ -1,4 +1,4 @@
-package assignments2017.a3posted;
+//package assignments2017.a3posted;
 
 //COMP 250 - Introduction to Computer Science - Fall 2017
 //Assignment #3 - Question 1
@@ -33,8 +33,9 @@ public class WordTree
 		//  ADD YOUR CODE BELOW HERE
 		// Check if the word exists in the tree
 		// Use the string version of the prefix to get prefix length
-		String prefix_string = this.getPrefix(word);
-		WordTreeNode prefix_node = this.getPrefixNode(word);
+		System.out.println("Word to add " + word + "\n");
+		WordTreeNode prefix_node = getPrefixNode(word);
+		String prefix_string = getPrefix(word);
 		if(prefix_string.length() < word.length())
 		{
 			//the words are not equal, and nodes need to be added
@@ -46,7 +47,8 @@ public class WordTree
 
 		}
 		// this is the end of a word
-		this.setEndOfWord(true);
+		System.out.println("Word added" + prefix_node.toString()+"\n");
+		prefix_node.setEndOfWord(true);
 		
 		//  ADD YOUR ABOVE HERE
 	}
@@ -152,11 +154,11 @@ public class WordTree
 				match_words.add(prefix_node.toString());
 			for(int i = 0; i < 256; i ++)
 			{
-				if(prefix_node.getChild(i) != null)
+				if(prefix_node.getChild((char) i) != null)
 				{
 					// if the child exists, then get all words of the child recursively from 
 					// getListPrefixMatches and add then to the match_words element
-					match_words.addAll(getListPrefixMatches(prefix_node.getChild(i).toString())); 
+					match_words.addAll(getListPrefixMatches(prefix_node.getChild((char) i).toString())); 
 				}
 				
 			}
@@ -292,7 +294,7 @@ public class WordTree
 			// ADD YOUR CODE BELOW HERE
 			// For each child, the charInParent gives the edge
 			if(this.parent == null)
-				return null;
+				return ""; //returns an empty string rather than null to make .length calls easier
 			else
 				return this.parent.toString() + this.charInParent;
 
@@ -301,6 +303,5 @@ public class WordTree
 			// ADD YOUR CODE ABOVE HERE
 		}
 	}
-
 
 }
