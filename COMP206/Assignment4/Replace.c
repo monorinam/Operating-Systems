@@ -44,10 +44,10 @@ void FindRecord(char *filename, char *name, char record[])
             //find the name in the record
             int i = 0;
             int compareflag = 1;
-            while(line[i] != ',' && compareflag == 1)
+            while(*(line + i) != ',' && compareflag == 1)
             {
               //Still in name section of line
-              if(line[i] != name[i] )
+              if(*(line + i) != *(name + i) )
                 compareflag = 0;
               i = i + 1;
             }
