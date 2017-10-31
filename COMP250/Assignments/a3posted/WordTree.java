@@ -45,6 +45,8 @@ public class WordTree
 			}
 
 		}
+		// this is the end of a word
+		this.setEndOfWord(true);
 		
 		//  ADD YOUR ABOVE HERE
 	}
@@ -81,13 +83,11 @@ public class WordTree
 			}
 			else
 			{
-				return prefix_node;	
+				break; // done with prefix	
 			}
 
-			// move down the tree
 		}
-		// this is the end of a word
-		this.setEndOfWord(true);
+		return prefix_node;
 
 		   //return null;  //  REPLACE THIS STUB
 		
@@ -136,8 +136,34 @@ public class WordTree
 	public ArrayList<String> getListPrefixMatches( String prefix )
 	{
 		//  ADD YOUR CODE BELOW 
+		// Get prefix node from the String prefix 
+		WordTreeNode prefix_node = this.getPrefixNode(prefix);
+		if(prefix_node == null)
+			return null;
+		ArrayList<String> match_words = new ArrayList<String>();
+		//Check if the prefix exists in the tree
+		if(this.getPrefix(prefix).length() != prefix.length())
+			return null;
+		else
+		{
+			//traverse the tree recursively
+			// check if the node is a word, if yes, add to array list
+			if(prefix_node.isEndOfWord())
+				match_words.add(prefix_node.toString());
+			for(int i = 0; i < 256; i ++)
+			{
+				if(prefix_node.getChild(i) != null)
+				{
+					// if the child exists, then get all words of the child recursively from 
+					// getListPrefixMatches and add then to the match_words element
+					match_words.addAll(getListPrefixMatches(prefix_node.getChild(i).toString())); 
+				}
+				
+			}
+			
 
-		return null;   //  REMOVE THIS STUB
+		}
+		return match_words;
 		
 		//  ADD YOUR CODE ABOVE HERE
 	}
