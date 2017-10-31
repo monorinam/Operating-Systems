@@ -21,10 +21,8 @@ void FindRecord(char *filename, char *name, char record[])
 {
     //find length of file
     FILE *fileID;
-    int eof_flag = 0;
-    char *line = NULL;
-    size_t linecap = 0;
-    ssize_t nread;
+    char *line = malloc(MAX_LEN*sizeof(char));
+    int emptyflag = 0;
 
     //open file
     fileID = fopen(filename, "r");
@@ -34,13 +32,8 @@ void FindRecord(char *filename, char *name, char record[])
     {
       //read file line by line and 
       //find the name to match with char *name
-      while(eof_flag == 0)
+      while(fgets(line, MAX_LEN, fileID) != NULL)
       {
-          nread = getline(&line, &linecap, fileID);
-          if(nread <= 0)
-            eof_flag = 1; //reached end of file
-          else
-          {
             //find the name in the record
             int i = 0;
             int compareflag = 1;
@@ -56,12 +49,18 @@ void FindRecord(char *filename, char *name, char record[])
             {
               //strings are equal
               //duplicate the string
+              emptyflag = 1;
               duplicate_str(line, record);
             }// end of strcopy if
-
-          }// end of valid line if
       } //end of eof while
     } //end of file opened if
+    if(emptyflag == 0)
+    {
+      for(int i = 0; i < MAX_LEN; i ++)
+      {
+        *(record + i) = '\0';
+      }
+    }
 } //end of function
 
 void Replace(char *name, char *newname, char record[])
@@ -92,7 +91,7 @@ void Replace(char *name, char *newname, char record[])
       i = i + 1;
       j = j + 1;
     }
-    //*(record + i) = '\n';
+    *(record + i) = '\n';
     
 }
 void SaveRecord(char *filename, char *name, char record[])
@@ -102,37 +101,53 @@ void SaveRecord(char *filename, char *name, char record[])
     char *line = malloc(MAX_LEN*sizeof(char));
     int fileLength;
     int temp;
+    // find the file length using fseek to go to end of file
+    // and back again
+    // to load the file into buffer
     fseek(fileID, 0, SEEK_END);
     fileLength = ftell(fileID);
     fseek(fileID, 0, SEEK_SET);
+    // this buffer stores all data before the line to be replaced
     char *fileBufferBefore = malloc(fileLength*sizeof(char));
+    // this buffer stores all data after the line to be replaced
     char *fileBufferAfter = malloc(fileLength*sizeof(char));
+    // this is the flag that shows that the given line is found in
+    // the file and the rest of the lines are stored in the after buffer
     int switch_buffers = 0;
+
+    //initialize the buffer befores and afters to null
+    *fileBufferBefore = '\0';
+    *fileBufferAfter = '\0';
+    // error check that file can be opened.
     if (fileID == NULL)
       perror("The file could not be opened \n");
     else
     {
-      //if the line matches
-      //replace with new record
       int j = 0;
+      // go through each line of the file
       while(fgets(line, MAX_LEN - 1, fileID) != NULL)
       {
         int equal_flag = 0;
         int i = 0;
+        // step through the line until the first comma
+        // name is before the first comma
         while(*(line + i) != ',' && equal_flag == 0)
         {
+            // check if the names are identical character by character
             if(*(line + i) != *(name + i))
               equal_flag = 1;
             i = i + 1;
         } //end of while
         if(equal_flag == 0)
         {
+          // the names are equal for this line and the record
+          // so set the flag and reset the pointer counter
           switch_buffers = 1;
-          j = 1;
-          *fileBufferAfter='\n';
+          j = 0;
         }
         if(!switch_buffers)
         {
+          // before the line is found
           *(fileBufferBefore + j) = *line;
           temp = j;
           while(*(fileBufferBefore + j) != '\n')
@@ -144,6 +159,8 @@ void SaveRecord(char *filename, char *name, char record[])
         }
         else if (equal_flag == 1)
         {
+          // if the line has already been found and is not the current line
+          // (skips the current line)
           temp = j;
           *(fileBufferAfter + j) = *(line);
           while(*(fileBufferAfter + j) != '\n')
@@ -153,14 +170,15 @@ void SaveRecord(char *filename, char *name, char record[])
           }
           j = j + 1;
         }
-        //j = j + 1;
       }
       //Rewrite file
       //Reopen file for writing
       fileID = fopen(filename, "w");
+      // write the section before the line
       fputs(fileBufferBefore, fileID);
+      // write the line
       fputs(record, fileID);
-      //fputs('\n', fileID);
+      // write the section after the line
       fputs(fileBufferAfter, fileID);
     }
 }
@@ -192,9 +210,11 @@ int main(void)
     // Find the record
     filename = "phonebook.csv";
     FindRecord(filename, name, record);
-    printf("Record %s \n",record);
-    Replace(name, replacement_name, record);
-    printf("Record %s \n", record);
-    SaveRecord(filename, name, record);
+    if(*record != '\0')
+    {
+      Replace(name, replacement_name, record);
+      SaveRecord(filename, name, record);
+
+    }
 
 }
