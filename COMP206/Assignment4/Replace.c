@@ -9,17 +9,16 @@ void duplicate_str(char *orig, char *new)
   int i = 0;
   while(i < MAX_LEN)
   {
-    if(orig[i] != '\n')
-      new[i] = orig[i];
+    if(*(orig + i) != '\n')
+      *(new + i) = *(orig + i);
     else
-      new[i] = '\0';
+      *(new + i) = '\0';
     i = i + 1;
   }
 }
 void FindRecord(char *filename, char *name, char record[])
 {
     //find length of file
-    int fileLength;
     FILE *fileID;
     int eof_flag = 0;
     char *line = NULL;
@@ -27,7 +26,6 @@ void FindRecord(char *filename, char *name, char record[])
     ssize_t nread;
 
     //open file
-    printf("The name of the file is %s \n",filename);
     fileID = fopen(filename, "r");
     if (fileID == NULL)
       perror("The file could not be opened \n");
@@ -69,27 +67,27 @@ void Replace(char *name, char *newname, char record[])
 {
 
     //replace the name with the new name
-    char temp_record[MAX_LEN];
+    char *temp_record = malloc(MAX_LEN*sizeof(char));
     //First duplicate the temporary record
     duplicate_str(record,temp_record);
     //check the names are same: TODO
 
     int i = 0;
-    while(newname[i] != '\n')
+    while(*(newname + i) != '\n')
     {
       //add name to record
-      record[i] = newname[i];
+      *(record + i) = *(newname + i);
       i = i + 1;
     }
     int j = 0;
-    while(temp_record[j] != ',')
+    while(*(temp_record + j) != ',')
     {
       //accelerate past the first name
       j = j + 1;
     }
-    while(temp_record[j] != '\0')
+    while(*(temp_record + j) != '\0')
     {
-      record[i] = temp_record[j];
+      *(record + i) = *(temp_record + j);
       i = i + 1;
       j = j + 1;
     }
@@ -97,6 +95,29 @@ void Replace(char *name, char *newname, char record[])
 }
 void SaveRecord(char *filename, char *name, char record[])
 {
+
+    FILE *fileID = fopen(filename, "r+");
+    char *line = malloc(MAX_LEN*sizeof(char));
+    if (fileID == NULL)
+      perror("The file could not be opened \n");
+    else
+    {
+      //if the line matches
+      //replace with new record
+      while(fgets(line, MAX_LEN - 1, fileID) != NULL)
+      {
+        int equal_flag = 0;
+        int i = 0;
+        while(*(line + i) != ',' && equal_flag == 0)
+        {
+            if(*(line + i) != *(name + i))
+              equal_flag = 1;
+            i = i + 1;
+        } //end of while
+        if(equal_flag == 0)
+          fputs(record,fileID);
+      }
+    }
 }
 int main(void)
 {
@@ -123,21 +144,12 @@ int main(void)
        printf("Error in getting the name, please try again \n");
        trial = trial + 1;
     }
-
-    // Get name of file
-    trial = 0;
-    printf("Enter the name of the file \n");
-    while(fgets(filename, MAX_LEN, stdin) == NULL && trial <= MAX_TRY)
-    {
-       printf("Error in getting the name, please try again \n");
-       trial = trial + 1;
-    }
     // Find the record
     filename = "phonebook.csv";
     FindRecord(filename, name, record);
     printf("Record %s \n",record);
     Replace(name, replacement_name, record);
     printf("Record %s \n", record);
-    SaveRecord(filename, replacement_name, record);
+    SaveRecord(filename, name, record);
 
 }
