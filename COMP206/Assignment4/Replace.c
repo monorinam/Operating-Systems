@@ -72,16 +72,27 @@ void Replace(char *name, char *newname, char record[])
     char temp_record[MAX_LEN];
     //First duplicate the temporary record
     duplicate_str(record,temp_record);
-    //check the names are same
+    //check the names are same: TODO
 
     int i = 0;
-    while(temp_record != ',')
+    while(newname[i] != '\n')
     {
-      //this part contains the name, before the first comma
+      //add name to record
       record[i] = newname[i];
-
+      i = i + 1;
     }
-
+    int j = 0;
+    while(temp_record[j] != ',')
+    {
+      //accelerate past the first name
+      j = j + 1;
+    }
+    while(temp_record[j] != '\0')
+    {
+      record[i] = temp_record[j];
+      i = i + 1;
+      j = j + 1;
+    }
     
 }
 void SaveRecord(char *filename, char *name, char record[])
@@ -126,6 +137,7 @@ int main(void)
     FindRecord(filename, name, record);
     printf("Record %s \n",record);
     Replace(name, replacement_name, record);
+    printf("Record %s \n", record);
     SaveRecord(filename, replacement_name, record);
 
 }
