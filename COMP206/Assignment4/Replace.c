@@ -208,7 +208,7 @@ int main(void)
 {
     char name[MAX_LEN];
     char replacement_name[MAX_LEN];
-    char *filename;// = NULL;
+    char *filename;
     char record[MAX_LEN];
     int trial;
 
@@ -234,6 +234,7 @@ int main(void)
     FindRecord(filename, name, record);
     if(*record != '\0')
     {
+      //If the record exists, replace and save the record
       Replace(name, replacement_name, record);
       SaveRecord(filename, name, record);
 
