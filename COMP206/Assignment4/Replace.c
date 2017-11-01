@@ -109,6 +109,9 @@ void Replace(char *name, char *newname, char record[])
     }
     //terminate with newline
     *(record + i) = '\n';
+    //add null to other elements
+    for(i = i + 1;i < MAX_LEN;i++)
+      *(record + i) = '\0';
     
 }
 // This function writes the record to the file
