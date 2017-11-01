@@ -1,0 +1,87 @@
+\documentclass[english]{article}
+\usepackage[T1]{fontenc}
+\usepackage[latin9]{inputenc}
+\usepackage{babel}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage[left=0.5in,right=0.5in,top=0.8in,bottom=0.5in,footskip=.25in]{geometry}
+\usepackage{ocr}
+\usepackage{color}
+\usepackage{bm}
+\usepackage{booktabs}
+\usepackage{amsmath}
+%\usepackage{mathabx}
+\usepackage{amssymb}
+\usepackage[usenames,dvipsnames]{xcolor}
+\usepackage{tikz}
+\usepackage{titling}
+\usepackage{listings} 
+\usepackage{forest}
+\usepackage{caption}
+\usepackage{longtable}
+\usepackage{enumitem}
+\usepackage{courier}
+\lstset{% 
+   language=Matlab, 
+   basicstyle=\small\ttfamily, 
+} 
+\newcommand{\ndiv}{\hspace{-4pt}\not|\hspace{2pt}}
+\newcommand{\rou}[1]{\ocrfamily\small{\textbf{\textcolor{red}{#1}}}\normalfont\normalsize}
+\newcommand{\var}[1]{\ocrfamily\small{\textbf{\textcolor{gray}{#1}}}\normalfont\normalsize}
+\newcommand{\refline}[1]{(\protect\tikz{\protect\fill[white] (0,-0.3em) rectangle (1.8em,0.3em);\protect\draw[#1] (0,0) -- (1.8em,0);})}
+\newsavebox\CBox
+\def\textBF#1{\sbox\CBox{#1}\resizebox{\wd\CBox}{\ht\CBox}{\textbf{#1}}}
+\title{MATH 240: Discrete Structures 1 Assignment \#4}
+\author{Monorina Mukhopadhyay (ID: 260364335) Prof: E. DeCorte}
+\begin{document}
+\pgfkeys{/forest,
+    tria/.append style={ellipse, draw},
+  }
+\maketitle
+\section*{Problem 1}
+If each chest day is labeled as {$c_1$, $c_2$, $c_3$}, and the same for arm and back days, there are 7! ways of arranging the days. However, since the days within each set are interchangeable (ie, $c_1$, $a_1$, $c_2$ is the same as $c_2$, $a_1$, $c_1$), where the $a_i$ are for arm days; there are some duplicates in the set. The duplicates are 3!$\cdot$ 2! $\cdot$ 3! $\implies$ the total number of combinations are $\frac{7!}{3! 1! 3!} = 140.
+\section*{Problem 2}
+ From Fermat's Little Theorem,
+ $$ a^p \equiv a \text{mod} p$$
+ $$ \implies x^p \equiv x \text{mod} p \text{and} y^p \equiv y \text{mod} p$$
+ $$\implies x^p + y^p \equiv x + y \text{mod} p$$
+ $$ \text{Similarly, also by FLT}, (x + y)^p \equiv x + y \text{mod} p$$
+ $$ \text{Therefore, by transitivity of modular arithmetic} (x + y)^p \equiv x^p + y^p \text{mod} p$$
+\section*{Problem 3}
+From the Binomial theorem
+$$ (x + y)^n = \Sum_{k=0}^n \binom{n}{k} x^k y^(n-k)$$
+Differentiating both sides with respect to x,
+$$ n(x+y)^(n-1) = \Sum_{k=0}^n \binom{n}{k} k x^(k-1) y^(n-k)$$
+Substituting x = 1, y = 1
+$$ n 2^(n-1) = \Sum_{k=0}^n \binom{n}{k} k $$
+\section*{Problem 4}
+\section*{Problem 5}
+\begin{enumerate} [label=\alph*]
+\item From the solution given in lecture, there are $\binom{n + k - 1}{n}$ ways to distribute k identical objects among n bins. Here, k = 288, and n = 4. The number of quadruples are $$\binom{288 + 4 - 1}{4} = 292664520$.
+\item The prime factors of 288 are 2 and 3. From division, $ 288 = 2^5 \cdot 3^2$ \\
+Therefore, w,x,y,z must each be expressed as $2^a \cdot 3^b$ where a and b $ \geq 0$
+\\ Let $w = 2^(a_1) \cdot 3^(b_1), x = 2^(a_2) \cdot 3^(b_2), y = 2^(a_3) \cdot 3^(b_3) \text{and} z = 2^(a_4) \cdot 3^(b_4)$. Here, $wxyz = 2^(a_1 + a_2 + a_3 + a_4) \cdot 3^(b_1 + b_2 + b_3 + b_4) = 2^5 \cdot 3^2$. So the number of quadruples (w,x,y,z) is equal to the number of ways ($a_1,a_2,a_3,a_4$) and ($b_1,b_2,b_3,b_4$) can be expressed.
+$a_1 + a_2 + a_3 + a_4 = 5$ implies these can be expressed in $\binom{8}{4} = 70$ ways, and $b_1 + b_2 + b_3 + b_4 = 2$ implies these can be expressed in $\binom{5}{4} = 5$ ways. The total number of quadruplies is then $70 \cdot 5 = 350$
+\end{enumerate}
+\section*{Problem 6}
+\begin{enumerate} [label=\alph*]
+\item The 400 desks can be divided up into pairs of desks. There are 200 such pairs of desks. These are the pigeonholes.
+\\ There are 300 students. These are the pigeons.\\ Since there are more pigeons than pigeonholes (more students than pairs of desks), there will be at least one pair of desks where there are 2 students. These two students will be sitting next to each other. Therefore, there will always be two students sitting next to one another.
+The generalized pigeonhole principle says that if there are n objects among k boxes, then at least one box will have more than n/k objects. Here, n/k is 3/2 and therefore, at least one box will have > 3/2 students. Since students do not come in fractions, at least one box (of desk-pair) must have 2 students.
+\item Let the 200 desk pairs be 200 boxes. Now, each box can be filled with 1 student, and let the students sit on the right edge (seat) of the box so they all have desks between them. There are 100 students left. Now, let these 100 students go in the first 100 of the 200 boxes. Since all the desks are in a row, 200 students share neighbours. Therefore there are 100 students who do not go in pairs, and this is the minumum number of students who are un paired.
+\end{enumerate}
+\section*{Problem 7}
+\begin{enumerate} [label=\alph*]
+\item An injection is a mapping where if f(x) = f(y), then x = y. Therefore, for the set X, the first element can be mapped to 6 elements of Y, the second to 5 elements of Y and the third to 4 elements of Y. The number of injections is $6 \cdot 5 \cdot 4 = 120 = \frac{6!}{3!}$
+\item A surjection is a mapping where for every element b $\in$ B, there is an element a $\in$ A such that f(a) = b. This means that every element in Y is mapped to something in X. There are 3 elements in X, so there is a maximum of $3^n$ mappings from Y to X. However, some elements are counted twice, and need to be thrown out. The redundant mappings are all mappings that leave out one element of  X. $2^n$ of them miss the second element of X, and another $2^n$ of them miss the third element of X. However, the function that maps the elements of Y to the first element of X has been counted twice, and same for the ones that map just to the second and the third element of X. So these are added back in. The total surjections are: $3^n - 2^n - 2^n - 2^n + 3 = 3(3^(n-1) - 2^n + 1)$
+\end{enumerate}
+\section*{Problem 8}
+Each team plays 2 matches versus every other team. So, each team plays $2 \cdot 7$ = 14 matches. 
+\\ Total number of matches  = $\frac{14 \cdot 8}{2}$ (the division by 2 is to eliminate duplicates, since team 1 playing team 2 is the same as team 2 playing team 1) The total matches are 56.\\
+$$ 56 = 4a + b$$.
+For a team to advance to the next round, a > b. Otherwise, one of the other teams could potentially win all b matches, and would advance to the semi-finals instead.
+\\ gcd(56,4) = 4 and expressing 56 in terms of 4: $56 = 14 \cdot 4 = 13 \cdot 6 + 4 $ and so on until $ 56 = 12 \cdot 4 + 8 = 11 \cdot 4 + 12$. If each team wins 11 matches, a fifth team could win 12 matches and would instead go to semi-finals. So, each team must win 12 matches to definitely get to the semifinals (in this case, the other teams could win a max of 8 matches and would not advance.)
+\section*{Sources}
+\item Pigeonhole principle: http://www.cs.uni.edu/~schafer/1800/PracticeSheets/pigeonhole.pdf
+\item Surjections: http://homepages.warwick.ac.uk/~masgax/functions.pdf
+\end{document}
