@@ -5,9 +5,14 @@
 #define ERROR -1 //error code
 #define SUCCESS 0
 #define MAX_TRY 5
+// This is a helper function 
+// It replaces the string in orig with the string in new
+// It assumes both strings are a max of MAX_LEN
 void duplicate_str(char *orig, char *new)
 {
   int i = 0;
+  //Find the newline, add all characters before the newline to the new string
+  // Add null after the newline
   while(i < MAX_LEN)
   {
     if(*(orig + i) != '\n')
@@ -17,9 +22,11 @@ void duplicate_str(char *orig, char *new)
     i = i + 1;
   }
 }
+// This is the find record function
+// Inputs are filename, the name to be replaced, and the record array
+// with the record where name will be replaced.
 void FindRecord(char *filename, char *name, char record[])
 {
-    //find length of file
     FILE *fileID;
     char *line = malloc(MAX_LEN*sizeof(char));
     int emptyflag = 0;
@@ -37,9 +44,12 @@ void FindRecord(char *filename, char *name, char record[])
             //find the name in the record
             int i = 0;
             int compareflag = 1;
+            // The name is before the first comma, so step through line
+            // until the first comma
             while(*(line + i) != ',' && compareflag == 1)
             {
               //Still in name section of line
+              // compare the two strings char by char
               if(*(line + i) != *(name + i) )
                 compareflag = 0;
               i = i + 1;
@@ -54,6 +64,7 @@ void FindRecord(char *filename, char *name, char record[])
             }// end of strcopy if
       } //end of eof while
     } //end of file opened if
+    // If the line is not found record is just nulls
     if(emptyflag == 0)
     {
       for(int i = 0; i < MAX_LEN; i ++)
@@ -62,38 +73,45 @@ void FindRecord(char *filename, char *name, char record[])
       }
     }
 } //end of function
-
+// This is the function that replacenes name in record with newname
+// This function assumes that the record contains the line with the name
 void Replace(char *name, char *newname, char record[])
 {
 
     //replace the name with the new name
+    // Stores the old record
     char *temp_record = malloc(MAX_LEN*sizeof(char));
     //First duplicate the temporary record
     duplicate_str(record,temp_record);
     //check the names are same: TODO
 
     int i = 0;
+    // replace the name in record
     while(*(newname + i) != '\n')
     {
       //add name to record
       *(record + i) = *(newname + i);
       i = i + 1;
     }
+    // now shift the rest of the line after the name
     int j = 0;
     while(*(temp_record + j) != ',')
     {
       //accelerate past the first name
       j = j + 1;
     }
+    //now replace the rest from old line to new line
     while(*(temp_record + j) != '\0')
     {
       *(record + i) = *(temp_record + j);
       i = i + 1;
       j = j + 1;
     }
+    //terminate with newline
     *(record + i) = '\n';
     
 }
+// This function writes the record to the file
 void SaveRecord(char *filename, char *name, char record[])
 {
 
@@ -112,7 +130,7 @@ void SaveRecord(char *filename, char *name, char record[])
     // this buffer stores all data after the line to be replaced
     char *fileBufferAfter = malloc(fileLength*sizeof(char));
     // this is the flag that shows that the given line is found in
-    // the file and the rest of the lines are stored in the after buffer
+    // the file and the rest of the lines are stored in the fileBufferAfter buffer
     int switch_buffers = 0;
 
     //initialize the buffer befores and afters to null
@@ -148,6 +166,7 @@ void SaveRecord(char *filename, char *name, char record[])
         if(!switch_buffers)
         {
           // before the line is found
+          // add to before buffer
           *(fileBufferBefore + j) = *line;
           temp = j;
           while(*(fileBufferBefore + j) != '\n')
@@ -160,7 +179,7 @@ void SaveRecord(char *filename, char *name, char record[])
         else if (equal_flag == 1)
         {
           // if the line has already been found and is not the current line
-          // (skips the current line)
+          // (skips the current line), add to after buffer
           temp = j;
           *(fileBufferAfter + j) = *(line);
           while(*(fileBufferAfter + j) != '\n')
