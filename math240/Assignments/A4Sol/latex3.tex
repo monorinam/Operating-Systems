@@ -39,28 +39,45 @@
   }
 \maketitle
 \section*{Problem 1}
-If each chest day is labeled as {$c_1$, $c_2$, $c_3$}, and the same for arm and back days, there are 7! ways of arranging the days. However, since the days within each set are interchangeable (ie, $c_1$, $a_1$, $c_2$ is the same as $c_2$, $a_1$, $c_1$), where the $a_i$ are for arm days; there are some duplicates in the set. The duplicates are 3!$\cdot$ 2! $\cdot$ 3! $\implies$ the total number of combinations are $\frac{7!}{3! 1! 3!} = 140.
+If each chest day is labeled as {$c_1$, $c_2$, $c_3$}, and the same for arm and back days, there are 7! ways of arranging the days. However, since the days within each set are interchangeable (ie, $c_1$, $a_1$, $c_2$ is the same as $c_2$, $a_1$, $c_1$), where the $a_i$ are for arm days; there are some duplicates in the set. The duplicates are 3!$\cdot$ 2! $\cdot$ 3! $\implies$ the total number of combinations are $\frac{7!}{3! 1! 3!} = 140$.
 \section*{Problem 2}
  From Fermat's Little Theorem,
- $$ a^p \equiv a \text{mod} p$$
- $$ \implies x^p \equiv x \text{mod} p \text{and} y^p \equiv y \text{mod} p$$
- $$\implies x^p + y^p \equiv x + y \text{mod} p$$
- $$ \text{Similarly, also by FLT}, (x + y)^p \equiv x + y \text{mod} p$$
- $$ \text{Therefore, by transitivity of modular arithmetic} (x + y)^p \equiv x^p + y^p \text{mod} p$$
+ $$ a^p \equiv a \text{ mod } p$$
+ $$ \implies x^p \equiv x \text{ mod } p \text{ and } y^p \equiv y \text{ mod } p$$
+ $$\implies x^p + y^p \equiv x + y \text{ mod } p$$
+ $$ \text{Similarly, also by FLT}, (x + y)^p \equiv x + y \text{ mod } p$$
+ $$ \text{Therefore, by transitivity of modular arithmetic} (x + y)^p \equiv x^p + y^p \text{ mod } p$$
 \section*{Problem 3}
 From the Binomial theorem
-$$ (x + y)^n = \Sum_{k=0}^n \binom{n}{k} x^k y^(n-k)$$
+$$ (x + y)^n = \sum_{k=0}^n \binom{n}{k} x^k y^{(n-k)}$$
 Differentiating both sides with respect to x,
-$$ n(x+y)^(n-1) = \Sum_{k=0}^n \binom{n}{k} k x^(k-1) y^(n-k)$$
+$$ n(x+y)^{(n-1)} = \sum_{k=0}^n \binom{n}{k} k x^{(k-1)} y^{(n-k)}$$
 Substituting x = 1, y = 1
-$$ n 2^(n-1) = \Sum_{k=0}^n \binom{n}{k} k $$
+$$ n 2^{(n-1)} = \sum_{k=0}^n \binom{n}{k} k $$
 \section*{Problem 4}
+The number of k-subsets of S with n elements is: $\binom{n}{k} = \frac{n!}{(n-k)! k!}$\\
+The number of subsets where 4|k is $$ K_4 =  \binom{n}{k'} = \binom{n}{0} + \binom{n}{4} + \binom{n}{8}+....+\binom{n}{12}$$
+$$ K_4 = \sum_{j=0}^{j=3}\binom{n}{4k}$$
+Similarly to question 3, the binomial theorem can be used to evaluate this by setting x's and y's:
+$$ \sum_{k=0}^n \binom{n}{k} x^k y^{n-k} = (x+y)^n $$
+For x=1,y=1:
+$$ \sum_{k=0}^n \binom{n}{k} = \binom{n}{0} + \binom{n}{1} + ...+\binom{n}{13} = 2^n $$
+The $\binom{n}{k}$, where 4$\not|$k needs to be subtracted out from the above expression.
+Using $x = -1, y = 1$, in the binomial theorem
+$$ \sum_{k=0}^n \binom{n}{k} (-1)^k = \binom{n}{0} - \binom{n}{1} + \binom{n}{2} +...-\binom{n}{13} = 0$$
+Now, the odd elements will be gone when the above two equations are added, so the elements with n = 2,6,10 need to be removed.Using x = i and y = 1, and $i^2 = -1 $ and $i^3 = - i$
+$$ \sum_{k=0}^n \binom{n}{k} (i)^k = \binom{n}{0} + \binom{n}{1} \cdot i + \binom{n}{2} (-1)+ \binom{n}{3} (-i) + \binom{n}{4}+ ...+ \binom{n}{13} i  = (i + 1)^n$$
+Now, to get rid of the elements with $\pm$ i multiplied to them, using $x = -i$ and y = 1, since  since $(-i)^k + i^k = 0$ if k is odd, and $(-i)^k + i^k = -2$ if 4$\not|$ k and $(-i)^k + i^k = 2$ if 4|k
+$$ \sum_{k=0}^n \binom{n}{k} (-i)^k = \binom{n}{0} + \binom{n}{1} (-i) \cdot i + \binom{n}{2}(-1)+ \binom{n}{3} (i) + \binom{n}{4}+ ...+ \binom{n}{13} (-i) = (1-i)^n  $$
+Adding these three series, all the elements where k is not divisible by 4 are cancelled out, and the elements with 4|k are added 4 times. 
+$$ \sum_{k=0}^{3} \binom{n}{4k} = \frac{2^n + 0 + (1+i)^n + (1-i)^n}{4}$$
+
 \section*{Problem 5}
 \begin{enumerate} [label=\alph*]
-\item From the solution given in lecture, there are $\binom{n + k - 1}{n}$ ways to distribute k identical objects among n bins. Here, k = 288, and n = 4. The number of quadruples are $$\binom{288 + 4 - 1}{4} = 292664520$.
+\item From the solution given in lecture, there are $\binom{n + k - 1}{n}$ ways to distribute k identical objects among n bins. Here, k = 288, and n = 4. The number of quadruples are $$\binom{288 + 4 - 1}{4} = 292664520$$.
 \item The prime factors of 288 are 2 and 3. From division, $ 288 = 2^5 \cdot 3^2$ \\
 Therefore, w,x,y,z must each be expressed as $2^a \cdot 3^b$ where a and b $ \geq 0$
-\\ Let $w = 2^(a_1) \cdot 3^(b_1), x = 2^(a_2) \cdot 3^(b_2), y = 2^(a_3) \cdot 3^(b_3) \text{and} z = 2^(a_4) \cdot 3^(b_4)$. Here, $wxyz = 2^(a_1 + a_2 + a_3 + a_4) \cdot 3^(b_1 + b_2 + b_3 + b_4) = 2^5 \cdot 3^2$. So the number of quadruples (w,x,y,z) is equal to the number of ways ($a_1,a_2,a_3,a_4$) and ($b_1,b_2,b_3,b_4$) can be expressed.
+\\ Let $w = 2^{(a_1)} \cdot 3^{(b_1)}, x = 2^{(a_2)} \cdot 3^{(b_2)}, y = 2^{(a_3)} \cdot 3^{(b_3)} \text{and} z = 2^{(a_4)} \cdot 3^{(b_4)}$. Here, $wxyz = 2^{(a_1 + a_2 + a_3 + a_4)} \cdot 3^{(b_1 + b_2 + b_3 + b_4)} = 2^5 \cdot 3^2$. So the number of quadruples (w,x,y,z) is equal to the number of ways ($a_1,a_2,a_3,a_4$) and ($b_1,b_2,b_3,b_4$) can be expressed.
 $a_1 + a_2 + a_3 + a_4 = 5$ implies these can be expressed in $\binom{8}{4} = 70$ ways, and $b_1 + b_2 + b_3 + b_4 = 2$ implies these can be expressed in $\binom{5}{4} = 5$ ways. The total number of quadruplies is then $70 \cdot 5 = 350$
 \end{enumerate}
 \section*{Problem 6}
@@ -73,7 +90,7 @@ The generalized pigeonhole principle says that if there are n objects among k bo
 \section*{Problem 7}
 \begin{enumerate} [label=\alph*]
 \item An injection is a mapping where if f(x) = f(y), then x = y. Therefore, for the set X, the first element can be mapped to 6 elements of Y, the second to 5 elements of Y and the third to 4 elements of Y. The number of injections is $6 \cdot 5 \cdot 4 = 120 = \frac{6!}{3!}$
-\item A surjection is a mapping where for every element b $\in$ B, there is an element a $\in$ A such that f(a) = b. This means that every element in Y is mapped to something in X. There are 3 elements in X, so there is a maximum of $3^n$ mappings from Y to X. However, some elements are counted twice, and need to be thrown out. The redundant mappings are all mappings that leave out one element of  X. $2^n$ of them miss the second element of X, and another $2^n$ of them miss the third element of X. However, the function that maps the elements of Y to the first element of X has been counted twice, and same for the ones that map just to the second and the third element of X. So these are added back in. The total surjections are: $3^n - 2^n - 2^n - 2^n + 3 = 3(3^(n-1) - 2^n + 1)$
+\item A surjection is a mapping where for every element b $\in$ B, there is an element a $\in$ A such that f(a) = b. This means that every element in Y is mapped to something in X. There are 3 elements in X, so there is a maximum of $3^n$ mappings from Y to X. However, some elements are counted twice, and need to be thrown out. The redundant mappings are all mappings that leave out one element of  X. $2^n$ of them miss the second element of X, and another $2^n$ of them miss the third element of X. However, the function that maps the elements of Y to the first element of X has been counted twice, and same for the ones that map just to the second and the third element of X. So these are added back in. The total surjections are: $3^n - 2^n - 2^n - 2^n + 3 = 3(3^{(n-1)} - 2^{n} + 1)$
 \end{enumerate}
 \section*{Problem 8}
 Each team plays 2 matches versus every other team. So, each team plays $2 \cdot 7$ = 14 matches. 
@@ -82,6 +99,11 @@ $$ 56 = 4a + b$$.
 For a team to advance to the next round, a > b. Otherwise, one of the other teams could potentially win all b matches, and would advance to the semi-finals instead.
 \\ gcd(56,4) = 4 and expressing 56 in terms of 4: $56 = 14 \cdot 4 = 13 \cdot 6 + 4 $ and so on until $ 56 = 12 \cdot 4 + 8 = 11 \cdot 4 + 12$. If each team wins 11 matches, a fifth team could win 12 matches and would instead go to semi-finals. So, each team must win 12 matches to definitely get to the semifinals (in this case, the other teams could win a max of 8 matches and would not advance.)
 \section*{Sources}
+\begin{itemize}
+\item Problem 3:  https://proofwiki.org/wiki/Sum\_of\_Binomial\_Coefficients\_over\_Lower\_Index
+\item Problem 4: Roots of unity filter: http://web.mit.edu/~akessler/www/lectures/complex.pdf
+\item Problem 3: (This shows $2^n$ using binomial theorem) https://www.cs.duke.edu/courses/spring09/cps102/Lectures/L-02.pdf
 \item Pigeonhole principle: http://www.cs.uni.edu/~schafer/1800/PracticeSheets/pigeonhole.pdf
 \item Surjections: http://homepages.warwick.ac.uk/~masgax/functions.pdf
+\end{itemize}
 \end{document}
