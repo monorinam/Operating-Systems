@@ -32,8 +32,8 @@ public class WordTree
 	{
 		//  ADD YOUR CODE BELOW HERE
 		// Check if the word exists in the tree
-		// Use the string version of the prefix to get prefix length
-		System.out.println("Word to add " + word + "\n");
+		// Use the string version of the prefix to get prefix length (to see how much of the word is inserted)
+		//System.out.println("Word to add " + word + "\n");
 		WordTreeNode prefix_node = getPrefixNode(word);
 		String prefix_string = getPrefix(word);
 		if(prefix_string.length() < word.length())
@@ -47,7 +47,6 @@ public class WordTree
 
 		}
 		// this is the end of a word
-		System.out.println("Word added" + prefix_node.toString()+"\n");
 		prefix_node.setEndOfWord(true);
 		
 		//  ADD YOUR ABOVE HERE
@@ -124,9 +123,11 @@ public class WordTree
 			- Length of word is same as length of prefix
 			- the last word is the end of a word
 		*/
-		if(this.getPrefix(word).length() == word.length() && prefix_node.isEndOfWord())
-			return true;
-		return false;   
+		if(this.getPrefix(word).length() != word.length())
+			return false;
+		if(!(prefix_node.isEndOfWord()))
+			return false;
+		return true;   
 		
 		//   ADD YOUR CODE ABOVE HERE
 	}
@@ -158,6 +159,7 @@ public class WordTree
 				{
 					// if the child exists, then get all words of the child recursively from 
 					// getListPrefixMatches and add then to the match_words element
+					// match words will keep growing with each recursion
 					match_words.addAll(getListPrefixMatches(prefix_node.getChild((char) i).toString())); 
 				}
 				
@@ -292,11 +294,13 @@ public class WordTree
 		public String toString()
 		{
 			// ADD YOUR CODE BELOW HERE
+			// This method is adapted from the handout method in NaturalNumber.java 
+			String s = new String();
 			// For each child, the charInParent gives the edge
-			if(this.parent == null)
-				return ""; //returns an empty string rather than null to make .length calls easier
-			else
-				return this.parent.toString() + this.charInParent;
+			// If there is a parent, then add the charInParent edge to the string
+			if(this.parent != null)
+				s = this.parent.toString() + this.charInParent;
+			return s;
 
 			//return null;   //  REMOVE THIS CODE STUB
 			
