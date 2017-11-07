@@ -1,0 +1,101 @@
+Initializing database.....
+Lock Accessed at time : Tue Nov  7 17:10:24 2017
+ The table 102 was reserved for Kevin 
+Lock Accessed at time : Tue Nov  7 17:10:31 2017
+ The table 201 was reserved for Joseph 
+Lock Accessed at time : Tue Nov  7 17:10:40 2017
+ The table 205 was reserved for Hermione 
+Lock accessed at time : Tue Nov  7 17:10:51 2017
+Table 101 in section A is already reserved by Irene  
+Table 102 in section A is already reserved by Kevin  
+Table 103 in section A is available
+Table 104 in section A is available
+Table 105 in section A is available
+Table 106 in section A is available
+Table 107 in section A is available
+Table 108 in section A is available
+Table 109 in section A is available
+Table 110 in section A is available
+Table 201 in section B is already reserved by Joseph  
+Table 202 in section B is available
+Table 203 in section B is available
+Table 204 in section B is available
+Table 205 in section B is already reserved by Hermione  
+Table 206 in section B is available
+Table 207 in section B is available
+Table 208 in section B is available
+Table 209 in section B is available
+Table 210 in section B is available
+Lock Accessed at time : Tue Nov  7 17:10:58 2017
+ The table is unavailable, cannot be reserved
+Lock accessed at time : Tue Nov  7 17:11:01 2017
+Table 101 in section A is already reserved by Irene  
+Table 102 in section A is already reserved by Kevin  
+Table 103 in section A is available
+Table 104 in section A is available
+Table 105 in section A is available
+Table 106 in section A is available
+Table 107 in section A is available
+Table 108 in section A is available
+Table 109 in section A is available
+Table 110 in section A is available
+Table 201 in section B is already reserved by Joseph  
+Table 202 in section B is available
+Table 203 in section B is available
+Table 204 in section B is available
+Table 205 in section B is already reserved by Hermione  
+Table 206 in section B is already reserved by Mary  
+Table 207 in section B is available
+Table 208 in section B is available
+Table 209 in section B is available
+Table 210 in section B is available
+Lock Accessed at time : Tue Nov  7 17:11:07 2017
+ The table 103 was reserved for Leslie 
+Lock Accessed at time : Tue Nov  7 17:11:21 2017
+ The table 209 was reserved for Elizabeth 
+Lock accessed at time : Tue Nov  7 17:11:29 2017
+Table 101 in section A is already reserved by Irene  
+Table 102 in section A is already reserved by Kevin  
+Table 103 in section A is already reserved by Leslie  
+Table 104 in section A is available
+Table 105 in section A is available
+Table 106 in section A is available
+Table 107 in section A is available
+Table 108 in section A is already reserved by Mollie  
+Table 109 in section A is already reserved by Alisdair  
+Table 110 in section A is available
+Table 201 in section B is already reserved by Joseph  
+Table 202 in section B is available
+Table 203 in section B is available
+Table 204 in section B is available
+Table 205 in section B is already reserved by Hermione  
+Table 206 in section B is already reserved by Mary  
+Table 207 in section B is available
+Table 208 in section B is available
+Table 209 in section B is already reserved by Elizabeth  
+Table 210 in section B is available
+Lock Accessed at time : Tue Nov  7 17:11:33 2017
+ The table is unavailable, cannot be reserved
+Lock accessed at time : Tue Nov  7 17:11:41 2017
+Table 101 in section A is already reserved by Irene  
+Table 102 in section A is already reserved by Kevin  
+Table 103 in section A is already reserved by Leslie  
+Table 104 in section A is available
+Table 105 in section A is available
+Table 106 in section A is available
+Table 107 in section A is available
+Table 108 in section A is already reserved by Mollie  
+Table 109 in section A is already reserved by Alisdair  
+Table 110 in section A is available
+Table 201 in section B is already reserved by Joseph  
+Table 202 in section B is available
+Table 203 in section B is available
+Table 204 in section B is available
+Table 205 in section B is already reserved by Hermione  
+Table 206 in section B is already reserved by Mary  
+Table 207 in section B is available
+Table 208 in section B is available
+Table 209 in section B is already reserved by Elizabeth  
+Table 210 in section B is available
+Finished parsing file commands 
+ Exiting .... 

@@ -29,14 +29,14 @@ int table_no[TOTALTABLES];  // Goes from 100 to 110 and then 200 to 210
 char section[TOTALTABLES]; // The section (slightly redundant since we can get from the table #)
 int status[TOTALTABLES]; //"AVAILABLE or UNAVAILABLE"
 
-}reservation; 
+}reservation; //extra to indicate init
 reservation* reserve_db;
-sem_t *mutex_monorina;  // controls access to rc (the reader count)
-sem_t *db_monorina;    // controls access to database
-sem_t *order_monorina; // this is the mutex to remember order of requests for read/write
+sem_t *mutex;  // controls access to rc (the reader count)
+sem_t *db;    // controls access to database
+sem_t *order; // this is the mutex to remember order of requests for read/write
 			 // this does fifo service for both readers and writers
 			// to stop the writers from starving if an endless stream of readers arrive
-int *rc_monorina; // the reader count
+int rc = 0; // the reader count
 //int initdone = 0; // Indicates if the db is already initialized or not, also controlled by mutex
 //Shared memory functions
 
@@ -47,9 +47,8 @@ int *rc_monorina; // the reader count
 int init_database()
 {
 	//initialize the shared memory
-	int shm_fd, shm_rc;
+	int shm_fd;
 	char *name = "ReservationDBMM";
-	char *name_rc = "ReaderCountSharedMonorina";
 
 	/* create the shared memory segment */
 	shm_fd = shm_open(name, O_CREAT | O_RDWR, 0666); //Should it be just O_CREAT?
@@ -69,39 +68,25 @@ int init_database()
 		printf("Map failed\n");
 		exit(-1);
 	}
-	// open the readercount shared memory
-	shm_rc = shm_open(name_rc, O_CREAT | O_RDWR, 0666);
-	if(shm_rc < 0)
-	{
-		printf("Error in creating or opening shared memory");
-		exit(EXIT_FAILURE);
-	}
-	ftruncate(shm_rc, sizeof(int));
-	//map shared memory
-	rc_monorina = mmap(0,sizeof(int), PROT_READ| PROT_WRITE, MAP_SHARED, shm_rc, 0);
-	if(rc_monorina == MAP_FAILED)
-	{
-		printf("Map failed \n");
-		exit(EXIT_FAILURE);
-	}
+
 	//Unlink mutexes to ensure
 	// crashed code does not affect this
-	sem_unlink("mutex_monorina");
-	sem_unlink("db_monorina");
-	sem_unlink("order_monorina");
-
+	sem_unlink("mutex");
+	sem_unlink("db");
+	sem_unlink("order");
 
 	// Create mutex and db variables to control access to shared memory
-	mutex_monorina = sem_open("mutex_monorina",O_CREAT,0666,1);
-	db_monorina = sem_open("db_monorina",O_CREAT,0666,1);
-	order_monorina = sem_open("order_monorina", O_CREAT,0666,1);
+	mutex = sem_open("mutex",O_CREAT,0666,1);
+	db = sem_open("db",O_CREAT,0666,1);
+	order = sem_open("order", O_CREAT,0666,1);
 	// Now initialize the database
 	//down db
-	sem_wait(order_monorina);
-	sem_wait(db_monorina);
-	sem_post(order_monorina); // signal the order mutex since this write has been served and has db access
+	sem_wait(order);
+	sem_wait(db);
+	sem_post(order); // signal the order mutex since this write has been served and has db access
 	/* DB ACCESS TO INIT
 	*/
+	printf("This process has acquired memory lock to write..\n");
     printf("Initializing database.....\n");
 	for(int i = 0;i<TOTALTABLES;i++)
 	{
@@ -116,7 +101,8 @@ int init_database()
 			reserve_db->section[i] = 'B';
 		}
 	}
-	sem_post(db_monorina);
+	sem_post(db);
+    printf("This process has released memory lock \n");
 	return SUCCESS;
 
 	//up db
@@ -129,8 +115,6 @@ int reserve(char **args, int cnt)
 	int table;
 	int section;
 	int table_flag = 0;
-    time_t rawtime;
-    struct tm * timeinfo;
 	if(cnt !=3 && cnt != 4)
 	{
 		printf("Wrong arguments, please use form reserve <name> <section> <table number(optional)> ");
@@ -139,7 +123,15 @@ int reserve(char **args, int cnt)
 	else
 	{
 		//Protected read
-		
+		// de-reference the cmd pointer to prevent the command name in the linked list
+		// from being overwritten
+		// This segment is reused from Assignment 1 submission shell.c
+		/**char** arg_copy = malloc(cnt*sizeof(args));
+		for(int i = 0; i < cnt; i++)
+		{
+			arg_copy[i] = strdup(args[i]);
+		}
+		*/
 		if(!strcmp(args[2],"A"))
 			section = 1;
 		else
@@ -159,15 +151,10 @@ int reserve(char **args, int cnt)
 			table = 0;
 		
 		//Write region
-		sem_wait(order_monorina);
-		sem_wait(db_monorina);
-		sem_post(order_monorina);
-        time(&rawtime);
-        timeinfo = localtime (&rawtime);
-        //printf("Lock Accessed at time : %s ",asctime(timeinfo));
-        int w,rem;
-        w = rand() % 10;
-        rem = sleep(w);
+		sem_wait(order);
+		sem_wait(db);
+		sem_post(order);
+        printf("This process has acquired memory lock");//TODO:DELETE
 		for(int i = (section-1)*10; i < section*10; i++)
 		{
 			//check if any table in section is available
@@ -187,13 +174,15 @@ int reserve(char **args, int cnt)
 				break;
 			}
 		}
-		sem_post(db_monorina);
+		sem_post(db);
+		//free(arg_copy);
+        printf("This process has released memory lock\n");//TODO:DELETE
 		if(table_flag == 0)
 		{
-			printf("The table is unavailable, cannot be reserved\n");
+			printf("The table is unavailable, cannot be reserved\n Please enter another table number or section to reserve table \n");
 			return FAILURE;
 		}
-		printf("The table %d was reserved for %s \n",table, args[1]);
+		printf("The table was reserved for you \n");
 		return SUCCESS;
 
 	}
@@ -204,22 +193,16 @@ int status()
  // Multiple readers can read from the same database
 	//reservation reserve_temp = malloc(sizeof(reservation));
 	char* section;
-	sem_wait(order_monorina); //wait in queue to access reading
-	sem_wait(mutex_monorina); // get access to rc
-	if (*rc_monorina == 0)
-		sem_wait(db_monorina);
-	*rc_monorina += 1;
-	sem_post(order_monorina); //now have access to db so get out of queue
-	sem_post(mutex_monorina); // give up access to rc since done updating
+	sem_wait(order); //wait in queue to access reading
+	sem_wait(mutex); // get access to rc
+	rc = rc + 1;
+	if(rc == 1)
+		sem_wait(db);
+	sem_post(order); //now have access to db so get out of queue
+	sem_post(mutex); // give up access to rc since done updating
 	//Read database
-    time_t rawtime;
-    struct tm * timeinfo;
-    time(&rawtime);
-    timeinfo = localtime(&rawtime);
-    //printf("Lock accessed at time : %s",asctime(timeinfo));
-    int w,rem;
-    w = rand() % 10;
-    rem = sleep(w);
+
+    printf("This procese has acquired lock to read \n");//TODO:DELETE	
 	// Ask: should I do a memcpy rather than directly reading memcpy(reserve_temp,reserve_db,)
 	for(int i = 0; i<TOTALTABLES;i++)
 	{
@@ -228,12 +211,13 @@ int status()
 		else if(reserve_db->status[i] == UNAVAILABLE)
 			printf("Table %d in section %c is already reserved by %s  \n", reserve_db->table_no[i],reserve_db->section[i], reserve_db->name[i]);
 	}
-	sem_wait(mutex_monorina); // need to change rc again
+	sem_wait(mutex); // need to change rc again
 	// Since this reader is done
-	*rc_monorina = *rc_monorina - 1;
-	if(*rc_monorina == 0)  // all readers are done so give up db access
-		sem_post(db_monorina);
-	sem_post(mutex_monorina); //updated rc done
+	rc = rc - 1;
+	if(rc == 0)  // all readers are done so give up db access
+		sem_post(db);
+	sem_post(mutex); //updated rc done
+    printf("This process has released read lock \n");//TODO:DELETE
 	return SUCCESS;
 
 
@@ -242,8 +226,6 @@ int status()
 
 // This function is a modified version of the getcmd function
 // given to us in Assignment 1, COMP 310 2017.
-//Here it either reads from the command line or from the file with given fileID
-// If fileflag is 0, it reads from CLI, else from file with FileID
 int getcmd(char *args[], int fileflag, FILE *fileID)
 {
 
@@ -251,7 +233,7 @@ int getcmd(char *args[], int fileflag, FILE *fileID)
 	size_t linecap = 0;
 	int i = 0;
 	char *token;
-	//read from CLI
+	
 	if(fileflag == 0)
 	{
 		printf(">>");
@@ -260,11 +242,10 @@ int getcmd(char *args[], int fileflag, FILE *fileID)
 			exit(-1);
 		}	
 	}
-	else //read from file
+	else
 	{
 		if(getline(&line,&linecap,fileID) <= 0)
 		{
-			free(line);
 			return -1;
 		}
 	}
@@ -276,32 +257,24 @@ int getcmd(char *args[], int fileflag, FILE *fileID)
         if (strlen(token) > 0)
             args[i++] = token;
     }
-    //if(i == 0) {
-    if(i == 0)
-    {
+    if(i == 0) {
     	free(l);
     }
-    free(line);
-    //free(fileID);
-    //}
     return i;
 }
-//This method parses the sentences read from the CLI or file, and calls
-// the required function (init, reserve status) If the shared memeory is not
-// open, it opens the shared memory (memopen_flag indicates whether SHM is open or not)
 int parse_sentence(int memopen_flag, char *args[], int cnt)
 {
 	
 	char *name = "ReservationDBMM";
-	char *name_rc = "ReaderCountSharedMonorina";//"
 	// if this is the first run of this loop
 	// for the process and if the first command
 	// is not init, then open the memory map for
 	if(!strcmp(args[0],"init"))
 		init_database();
-	else if(memopen_flag == 0)  //if command is not init and the shared memory is not open
+	// reading (assumes the memory has been written)
+	else if(memopen_flag == 0) 
 	{
-		int shm_fd, shm_rc;
+		int shm_fd;
 		
 		//sem_wait(db);
 		shm_fd = shm_open(name, O_RDWR, 0666);
@@ -316,28 +289,13 @@ int parse_sentence(int memopen_flag, char *args[], int cnt)
 			printf("Database cannot be accessed \n");
 			exit(-1);
 		}
-		
-		shm_rc = shm_open(name_rc, O_RDWR, 0666);
-		if (shm_rc == -1) {
-			printf("Reader count cannot be accessed\n");
-			exit(-1);
-		}
-
-		/* now map the shared memory segment in the address space of the process */
-		rc_monorina = mmap(0,sizeof(int), PROT_READ|PROT_WRITE, MAP_SHARED, shm_rc, 0);
-		if (rc_monorina == MAP_FAILED) {
-			printf("reader count cannot be accessed \n");
-			exit(-1);
-		}
-
-
-		mutex_monorina = sem_open("mutex_monorina",O_RDWR,0666,1);
-		db_monorina = sem_open("db_monorina",O_RDWR,0666,1);
-		order_monorina = sem_open("order_monorina",O_RDWR,0666,1);
+		mutex = sem_open("mutex",O_RDWR,0666,1);
+		db = sem_open("db",O_RDWR,0666,1);
+		order = sem_open("order",O_RDWR,0666,1);
 		//sem_post(db);
 		
 	}
-	// Call the required functions for the command given
+	
 	if(!strcmp(args[0],"reserve"))
 		reserve(args, cnt);
 	else if(!strcmp(args[0],"status"))
@@ -350,7 +308,6 @@ int parse_sentence(int memopen_flag, char *args[], int cnt)
 	return SUCCESS;
 
 }
-// The main function
 int main(int argc, char *argv[])
 {
 	int memopen_flag = 0;
@@ -359,7 +316,7 @@ int main(int argc, char *argv[])
 	//File reading
 	if(argc > 1)
 	{
-		// file reading for getcmd
+		// file reading stuff goes here
 		fileflag = 1;
 		//find number of lines in file
 		fileID = fopen(argv[1],"r");
@@ -373,9 +330,6 @@ int main(int argc, char *argv[])
 		// Get command here
 		char *args[MAX_OPTIONS];
 		int cnt;
-        time_t now;
-        srand((unsigned int) (time(&now)));
-        //if file is given as argument, open the file to getcmd
 		if(fileflag == 0)
 			cnt = getcmd(args, fileflag , NULL);
 		else

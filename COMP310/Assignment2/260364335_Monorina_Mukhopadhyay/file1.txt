@@ -1,0 +1,10 @@
+status
+reserve Irene A 101
+reserve John B 205
+reserve Mary B 206
+status
+reserve Mollie A 108
+reserve Alisdair A 109
+status
+reserve Michelle A 103
+status

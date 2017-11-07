@@ -1,0 +1,13 @@
+init
+reserve Kevin A 102
+reserve Joseph B 201
+reserve Hermione B 205
+status
+reserve Ella B 206
+status
+reserve Leslie A 103
+reserve Elizabeth B 209
+status
+reserve Jonah A 101
+status
+
