@@ -51,8 +51,8 @@ public class HashLinkedList<K,V>{
 		{
 			return null;
 		}
-		HashNode<K,V> tempNode = getNode(index);
-		return tempNode;
+		//HashNode<K,V> tempNode = getNode(index);
+		return getNode(index);
 		// ADD CODE ABOVE HERE
 	}
 
@@ -79,7 +79,7 @@ public class HashLinkedList<K,V>{
 		if(index< 0)
 			return null
 		else{
-			return getNode(index);
+			return remove(index);
 		}
 
 		// ADD CODE ABOVE HERE
@@ -160,6 +160,27 @@ public class HashLinkedList<K,V>{
 		else 
 			return -1;
 	}
+	// this method replaces the value for a key at a given index with a different one
+	public void replace(K key, V value)
+	{
+		int index = getIndexOf(key);
+		if(index == -1)
+		{
+			add(key,value);
+		}
+		else
+		{
+			//iterate over indexes until current
+			int i = 0;
+			HashNode<K,V> cur = head;
+			while(i < index){
+				cur = cur.next;
+				i++;
+			}
+			if(cur.getKey() == key)
+				cur.setValue(value);
+		}
+	} 
 	// This is a private helper method to find the element
 	// with the given key.
 	private HashNode<K,V> getNode(int i)

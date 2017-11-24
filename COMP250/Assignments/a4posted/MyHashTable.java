@@ -39,7 +39,13 @@ class MyHashTable<K,V> {
 	MyHashTable(int numBuckets) {
 
 		//  ADD YOUR CODE BELOW HERE
-
+		this.numBuckets = numBuckets;
+		buckets = new ArrayList< HashLinkedList<K,V> >();
+		// initialize all entries of buckets
+		for (int i = 0; i < numBuckets; i++)
+		{
+			buckets.add(new HashLinkedList<K,V>());
+		}
 
 		//  ADD YOUR CODE ABOVE HERE
 
@@ -86,7 +92,33 @@ class MyHashTable<K,V> {
 	public  V  put(K key, V value) {
 
 		//  ADD YOUR CODE BELOW HERE
+		
+	
+	
+		//get the position of the bucket with the given key
+		int bucket_pos = this.hashFunction(key);
 
+		//add to the arraylist's bucket_pos's hashlinkedlist
+		//Check if there is a different value already and overwrite if so
+		int index_exists = buckets.get(bucket_pos).getIndexOf(key); //TODO: change to containskey
+		if(!containsKey(key))
+		{
+			//Value does not exist, add a new hashnode to the linkedlist
+			entryCount++;
+			buckets.get(bucket_pos).add(key,value);
+			return null;
+		}
+		else
+		{
+			V oldValue = buckets.get(bucket_pos).getListNode(key).getValue();
+			buckets.get(bucket_pos).replace(key, value);
+			return oldValue;
+
+		}
+
+		// Call rehash if overloaded
+		if(size()/getNumBuckets() > MAX_LOAD_FACTOR)
+			rehash();
 		//  ADD YOUR CODE ABOVE HERE
 		return null;
 	}
@@ -98,8 +130,13 @@ class MyHashTable<K,V> {
 	public V get(K key) {
 
 		//  ADD YOUR CODE BELOW HERE
-
-
+		//find the bucket with the key
+		int bucket_pos = this.hashFunction(key);
+		HashNode<K,V> node = buckets.get(bucket_pos).getListNode(key);
+		if(node == null)
+			return null;
+		else
+			return node.getValue();
 		//  ADD YOUR CODE ABOVE HERE
 
 		return null;
@@ -112,11 +149,18 @@ class MyHashTable<K,V> {
 	public V remove(K key) {
 
 		//  ADD YOUR CODE BELOW HERE
+		int bucket_pos = this.hashFunction(key);
+		HashNode<K,V> node = buckets.get(bucket_pos).getListNode(key);
+		if(node == null)
+			return null;
 
+		V remove_val = node.getValue();
+		node = buckets.get(bucket_pos).remove(key);
+		return remove_val;
 
 		//  ADD  YOUR CODE ABOVE HERE
 
-		return(null);
+		//return(null);
 	}
 
 	/*

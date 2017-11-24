@@ -19,7 +19,10 @@ public  class HashNode<K,V> implements Cloneable{
 	//ADD HELPER METHODS BELOW HERE
 
 	// Hint: Implement a  'Public' clone() method
-
+	public void setValue(V value)
+	{
+		this.value = value;
+	}
 	//ADD HELPER METHODS ABOVE HERE
 
 	/*
