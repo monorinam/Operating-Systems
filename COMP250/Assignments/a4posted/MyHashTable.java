@@ -156,6 +156,7 @@ class MyHashTable<K,V> {
 
 		V remove_val = node.getValue();
 		node = buckets.get(bucket_pos).remove(key);
+		entryCount--;
 		return remove_val;
 
 		//  ADD  YOUR CODE ABOVE HERE
@@ -199,6 +200,23 @@ class MyHashTable<K,V> {
 	public void rehash()
 	{
 		//   ADD YOUR CODE BELOW HERE
+
+		int oldNumBuckets = getNumBuckets();
+		int newNumBuckets = 2*oldNumBuckets()+1;
+		//MyHashTable newBuckets = new MyHashTable<K,V>(newNumBuckets);
+		ArrayList< HashLinkedList<K,V> > newBuckets = new ArrayList< HashLinkedList<K,V>>();
+		ArrayList< HashLinkedList<K,V> > oldBuckets = buckets; //=buckets;
+		buckets = newBuckets;
+		//ArrayList< HashLinkedList<K,V> > oldBuckets = new ArrayList< HashLinkedList<K,V>>();
+		int oldEntryCount = entryCount;
+		entryCount = 0;
+		numBuckets = newNumBuckets;
+		for(int i = 0;i < oldNumBuckets; i++)
+		{
+			
+		}
+		// Now rehash the data into the new sets by cloning the HashNodes and inserting
+
 
 		//   ADD YOUR CODE ABOVE HERE
 

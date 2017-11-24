@@ -23,6 +23,20 @@ public  class HashNode<K,V> implements Cloneable{
 	{
 		this.value = value;
 	}
+	// public void setNext(HashNode<K,V> next)
+	// {
+	// 	this.next = next;
+	// }
+	@Override
+	public HashNode<K,V> clone()
+	{
+		// This will set the key and value of the clone to the same as this.k/v
+		HashNode<K,V> copy = new HashNode<K,V>(this.key, this.value);
+		// this will set the next value to the same as this.next
+		copy.next = this.next;
+		return copy;
+
+	}
 	//ADD HELPER METHODS ABOVE HERE
 
 	/*
