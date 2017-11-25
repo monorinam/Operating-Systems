@@ -25,6 +25,9 @@ public class HashLinkedList<K,V>{
 
 	public void add(K key, V value){
 		// ADD CODE BELOW HERE
+		//Adapted from Singly LinkedList handout code
+		// Adds node to the head of the list, and changes
+		// the old node if list is not empty
 		HashNode<K,V> newNode = new HashNode<K,V>(key,value);
 		size++;
 		if (head==null) {
@@ -46,6 +49,7 @@ public class HashLinkedList<K,V>{
 
 	public HashNode<K,V> getListNode(K key){
 		// ADD CODE BELOW HERE
+		//Get index and then add using the index
 		int index = getIndexOf(key);
 		if(index < 0 || index >= size)
 		{
@@ -128,7 +132,7 @@ public class HashLinkedList<K,V>{
 			//  Now we can assume that size > 1.   
 			//  We first deal with case that i == 0
 			
-			//SNode<E> cur = head;
+			
 			size--;
 			if (i == 0){
 				head = head.next;
@@ -143,15 +147,16 @@ public class HashLinkedList<K,V>{
 			}
 		}
 	}
-	public int getIndexOf(K key){
+	// This method gets the index of the node with key
+	private int getIndexOf(K key){
 		HashNode<K,V>  cur = head;
 		int i = 0;     
 		
-		if (cur == null)
+		if (cur == null) //empty list
 			return -1;
 		
 		while ((cur.getKey() != key) && (cur.next != null)){
-			cur = cur.next;
+			cur = cur.next; //find key
 			i++;
 		}
 		
@@ -161,7 +166,8 @@ public class HashLinkedList<K,V>{
 			return -1;
 	}
 	// this method replaces the value for a key at a given index with a different one
-	public void replace(K key, V value)
+	// Used to overwrite the value at a key node
+	void replace(K key, V value)
 	{
 		int index = getIndexOf(key);
 		if(index == -1)
@@ -178,10 +184,10 @@ public class HashLinkedList<K,V>{
 				i++;
 			}
 			if(cur.getKey() == key)
-				cur.setValue(value);
+				cur.setValue(value); //set value
 		}
 	} 
-	// This is a public helper method to find the element
+	// This is a package level helper method to find the element
 	// with the given position.
 	HashNode<K,V> getNode(int i)
 	{
@@ -194,36 +200,18 @@ public class HashLinkedList<K,V>{
 				return head; 
 			}
 			else{
+				// Find node with index
 				int index = 0;	
 				HashNode<K,V> cur = head;
 				while (index < i){   
 					cur = cur.next;
 					index++;
 				}
-				return cur;
+				return cur; 
 			}
 		}
 	}
-	// private HashNode<K,V> getNode(K key)
-	// {
-	// 	HashNode<K,V> curr = head;
-	// 	//Find the node with the given key
-	// 	for(int i = 0; i < size; i ++)
-	// 	{
-	// 		if(curr.key == key)
-	// 		{
-	// 			return curr; //found the right node
-	// 		}
-	// 		else
-	// 		{
-	// 			curr = curr.next;
-	// 		}
-	// 	}
-	// 	//If key is not found, then return null
-	// 	return null;
-	// }
-
-
+	
 	//ADD YOUR HELPER METHODS ABOVE THIS
 
 

@@ -41,7 +41,7 @@ class MyHashTable<K,V> {
 		//  ADD YOUR CODE BELOW HERE
 		this.numBuckets = numBuckets;
 		buckets = new ArrayList< HashLinkedList<K,V> >();
-		// initialize all entries of buckets
+		// initialize all entries of buckets by adding linkedlists to all buckets
 		for (int i = 0; i < numBuckets; i++)
 		{
 			buckets.add(new HashLinkedList<K,V>());
@@ -98,23 +98,22 @@ class MyHashTable<K,V> {
 		//get the position of the bucket with the given key
 		int bucket_pos = this.hashFunction(key);
 
-		//add to the arraylist's bucket_pos's hashlinkedlist
+		//add key,value to the arraylist's bucket_pos's hashlinkedlist
+
 		//Check if there is a different value already and overwrite if so
-		//int index_exists = buckets.get(bucket_pos).getIndexOf(key); //TODO: change to containskey
+		
 		V oldValue = null;
 		if(!containsKey(key))
 		{
 			//Value does not exist, add a new hashnode to the linkedlist
 			entryCount++;
 			buckets.get(bucket_pos).add(key,value);
-			//return null;
 		}
 		else
 		{
 			oldValue = buckets.get(bucket_pos).getListNode(key).getValue();
+			// this function in HashLinkedList overwrites the value of a node
 			buckets.get(bucket_pos).replace(key, value);
-			//return oldValue;
-
 		}
 
 		// Call rehash if overloaded
@@ -134,6 +133,7 @@ class MyHashTable<K,V> {
 		//  ADD YOUR CODE BELOW HERE
 		//find the bucket with the key
 		int bucket_pos = this.hashFunction(key);
+		//Get the node in the HashLinkedList
 		HashNode<K,V> node = buckets.get(bucket_pos).getListNode(key);
 		if(node == null)
 			return null;
@@ -151,15 +151,19 @@ class MyHashTable<K,V> {
 	public V remove(K key) {
 
 		//  ADD YOUR CODE BELOW HERE
+		//find bucket
 		int bucket_pos = this.hashFunction(key);
-		HashNode<K,V> node = buckets.get(bucket_pos).getListNode(key);
+		// Get node and remove from buckets
+		HashNode<K,V> node;
+		
+		node = buckets.get(bucket_pos).remove(key);
+		//If node is not found
 		if(node == null)
 			return null;
-
-		V remove_val = node.getValue();
-		node = buckets.get(bucket_pos).remove(key);
+		//If not is found, decrease count (since removed)
+		// and get value
 		entryCount--;
-		return remove_val;
+		return node.getValue();
 
 		//  ADD  YOUR CODE ABOVE HERE
 
@@ -202,35 +206,30 @@ class MyHashTable<K,V> {
 	public void rehash()
 	{
 		//   ADD YOUR CODE BELOW HERE
-
-		int oldNumBuckets = getNumBuckets();
-		int newNumBuckets = 2*oldNumBuckets+1;
-		//MyHashTable newBuckets = new MyHashTable<K,V>(newNumBuckets);
-		//ArrayList< HashLinkedList<K,V> > newBuckets = new ArrayList< HashLinkedList<K,V>>();
-		//ArrayList< HashLinkedList<K,V> > oldBuckets = buckets; //=buckets;
+		// calculate new buckets
+		//int oldNumBuckets = getNumBuckets();
+		int newNumBuckets = 2*getNumBuckets()+1;
+		
 		// Get all the keys and values to rehash them
 		ArrayList <K> allKeys = keys();
 		ArrayList <V> allVals = values();
-		//buckets = newBuckets;
-		//ArrayList< HashLinkedList<K,V> > oldBuckets = new ArrayList< HashLinkedList<K,V>>();
 		int oldEntryCount = entryCount;
-		//Update entry count
-		//entryCount = 0;
+		
 		//Update numBuckets
 		numBuckets = newNumBuckets;
+		// clear the buckets
 		buckets.clear();
-		// add new buckets to this.buckets
+		// add new HashLinkedLists to this.buckets
 		for(int i = 0; i < newNumBuckets; i++)
 		{
 			buckets.add(new HashLinkedList<K,V>());
 		}
+		// add all key/value entries
 		for(int i = 0; i < oldEntryCount;i++)
 		{
 			this.put(allKeys.get(i),allVals.get(i));
 		}
 		
-		// Now rehash the data into the new sets by cloning the HashNodes and inserting
-		//update buckets
 
 
 		//   ADD YOUR CODE ABOVE HERE
@@ -262,7 +261,9 @@ class MyHashTable<K,V> {
 		ArrayList<K>  listKeys = new ArrayList<K>();
 
 		//   ADD YOUR CODE BELOW HERE
+		//Get all the entries
 		HashIterator allEntriesList = iterator();
+		//Get all the keys and add to the listKeys
 		while(allEntriesList.hasNext())
 		{
 			listKeys.add(allEntriesList.next().getKey());
@@ -289,7 +290,9 @@ class MyHashTable<K,V> {
 		ArrayList<V>  listValues = new ArrayList<V>();
 
 		//   ADD YOUR CODE BELOW HERE
+		// Get all entries from iterator
 		HashIterator allEntriesList = iterator();
+		// Iterate over to add values, keys and values added in same order
 		while(allEntriesList.hasNext())
 		{
 			listValues.add(allEntriesList.next().getValue());
@@ -302,7 +305,7 @@ class MyHashTable<K,V> {
 
 
 
-		//return null; //CODE STUB. REMOVE THIS LINE.
+		 //CODE STUB. REMOVE THIS LINE.
 	}
 
 	@Override
@@ -337,7 +340,7 @@ class MyHashTable<K,V> {
 		{
 
 			//  ADD YOUR CODE BELOW HERE
-			//allEntries.head = null;
+			//Create empty HashLinkedList
 			allEntries = new HashLinkedList<K,V>();
 			for(int i = 0; i < getNumBuckets(); i ++)
 			{
@@ -346,6 +349,7 @@ class MyHashTable<K,V> {
 				HashLinkedList<K,V> curr_list = buckets.get(i);
 				for(int j = 0; j < curr_list.size(); j++)
 				{
+					//clone node and add entries to the new linkedlist
 					HashNode<K,V> node = curr_list.getNode(j).clone();
 					allEntries.add(node.getKey(),node.getValue());
 						
