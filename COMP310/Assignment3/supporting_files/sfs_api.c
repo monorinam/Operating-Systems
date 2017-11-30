@@ -51,6 +51,13 @@ int fill_block()
 		return first_free; //success
 
 }
+//this function empties out blocks
+// (when file is either deleted or blocks that were
+// assigned and then not needed)
+int make_block_empty()
+{
+
+}
 
 //Check if a file name already exists
 int check_file_exists(char* fname)
@@ -122,6 +129,7 @@ void mksfs(int fresh) {
 			else
 			{
 				//inode_array[i] = malloc(sizeof(inode_t));
+				inode_array[i].data_ptrs = -1; //not used yet
 				inode_array[i].inuse = NOT_INUSE
 			}
 
@@ -241,6 +249,8 @@ int sfs_fopen(char *name){
 		if(filedestable_index != FAILURE)
 		{
 			//found file; open 
+			fildest.fildes[filedestable_index].rwptr = 0;
+			fildest.use[filedestable_index] = IN_USE;
 			return filedestable_index;
 		}
 		//then check if it is in the file directory
@@ -264,21 +274,261 @@ int sfs_fopen(char *name){
 	}
 	if(fd_index == -1)
 		return FILE_ERR2;
+	fildest.fildes[fd_index]->inode = &inode_array[inode_num];
+	fildest.fildes[fd_index].inodeIndex = inode_num;
+	fildest.fildes[fd_index].rwptr = 0;
 	return fd_index;
-
-
-	//if filenum >= 0 and new file descriptor could not be created error code 2
-	//if filenum <=0 and new file descriptor could not be created error code 1
-
 
 }
 int sfs_fclose(int fileID) {
+	if(fileID >=0 && fileID < NUM_FILES)
+	{
+		//file is valid
+
+		if(fildest.fildes[fileID].inodeIndex >= 0)
+		{
+			//valid inode
+			//update the file descriptor values
+			fildest.fildes[fileID].rwptr = 0;
+			fildest.use[fileID] = NOT_INUSE;
+		}
+		else
+			return FILE_ERR1;
+
+	}
+	else
+		return FILE_ERR1; //fileID not valid
 
 }
 int sfs_fread(int fileID, char *buf, int length) {
 	
 }
+void free_blocks_list(int start, int end, int[] block_array)
+{
+	for(int i = start; i < end; i++)
+	{
+		release_block(block_array[i]);
+	}
+}
 int sfs_fwrite(int fileID, const char *buf, int length) {
+	//error checking
+	// is the fileID valid
+	if(fileID >= 0 && fileID < NUM_FILES)
+	{
+		if(fildest.fildes[fileID].inodeIndex >= 0)
+		{
+			if(fildest.use[fileID] == IN_USE)
+			{
+				//file is open for writing
+				// find the number of blocks that need to be added to the file (if needed)
+				// the addition begins at rwptr and the length of buf is length
+				// so the end of the file will be at rwptr + length
+				// the current size is size. If size > (rwptr + length) then file needs more blocks
+				inode_t * node = &(fildest.fildes[fileID].inode);
+				if(&fildest.fildes[fileID].inode->size >( &fildest.fildes[fileID].inode->rwptr + length))
+				{
+					//needs more blocks
+					//Num blocks = (rwptr + length - size)/BLOCK_SIZE
+					int indirect_first = (node->indirectPointer==-1)?0:-1;
+					int blocks_to_assign = ((&(fildest.fildes[fileID].inode->rwptr) + length) - (&(fildest.fildes[fileID].inode->size)))/BLOCK_SIZE;
+					//find if there is a series of such blocks possible
+					if(blocks_to_assign > BLOCK_SIZE)
+						return FILE_ERR3;
+					int block_list[blocks_to_assign];
+					int release_flag = 1;
+					int i = 0;
+					for(; i < blocks_to_assign; i ++)
+					{
+						block_list[i] = fill_block();
+						if(block_list[i] < 0)
+						{
+							release_flag = -1;
+							break;
+						}
+					}
+					//release blocks if needed
+					if(release_flag == -1)
+					{
+						free_blocks_list(0,i,block_list);
+						return FILE_ERR3;
+					}
+					
+
+					// assign the blocks to the inodes
+					int k = 0; //j is the reference for the data pointers inside the node
+					while(k < 12)
+					{
+						if(node->data_ptrs[k] != -1) //it is occupied
+							k++;
+						else
+							break;
+					}
+					//check if the indirect block will be needed
+					// if we need it, then assign a block to it
+					// this block will contain an array filled with pointers to the other blocks
+					// if the data size is more than that can be accomodated in one indirect pointer
+					// release the block and terminate
+					if(blocks_to_assign > 12-k)
+					{
+						//indirect block needed
+						int indirect_ptr_array[BLOCK_SIZE];
+						if(node->indirectPointer == -1) //indirect pointer block does not exist
+							node->indirectPointer = fill_block();
+						if(node->indirectPointer < 0 || sizeof(indirect_ptr_array) > BLOCK_SIZE)
+						{
+							//free all the blocks assigned so far
+								free_blocks_list(0,blocks_to_assign,block_list);
+								if(node->indirectPointer >=0)
+									release_block(node->indirectPointer);
+								return FILE_ERR3;
+						}
+
+						//load pointer to memory if this is not first indirect block write
+						if(indirect_first == -1){
+							read_blocks(node->indirectPointer,1,indirect_ptr_array);
+							//check indirect pointer is not full and has enough space for new stuff
+							int m;
+							for(m=0; m < BLOCK_SIZE; m++)
+							{
+								if(indirect_ptr_array[m] == NOT_INUSE)
+								{
+									//break;
+									indirect_first = m;
+									break;
+								}
+							}
+							if(BLOCK_SIZE - m < blocks_to_assign - (12-k))
+							{
+								//release all blocks and return
+								free_blocks_list(0,blocks_to_assign,block_list);
+								return FILE_ERR3;
+
+							}
+						}
+						else{
+							//first indirect pointer block written here, so mark them all as unused
+							for(int m = 0; m <BLOCK_SIZE;m++)
+							{
+								indirect_ptr_array[m] = NOT_INUSE; //mark as unused
+							}
+						}
+						
+						
+
+					}
+					int j = indirect_first;
+					for(i = 0; i < blocks_to_assign; i ++)
+					{
+						//assign to direct pointer
+						if((k+i) < 12)
+						{
+							node->data_ptrs[k+i] = blocks_to_assign[i];
+						}
+						else
+						{
+							indirect_ptr_array[j] = blocks_to_assign[i];
+							j++;
+							
+						}
+						
+					}
+					//save indirect pointer to block
+					write_blocks(node->indirectPointer,1,&indirect_ptr_array);
+					//save inode table
+					write_blocks(1, NUM_INODE_BLOCKS,&inode_array);
+				}
+				//blocks added; file can be written now
+				// first block to write is rwptr/BLOCK_SIZE (this is also k-1)
+				// and write starts at position k - 1 + rwptr
+				// So for each block, find which block is being written to from the 
+				// data pointers or indirect pointers. Then read the block (i=0) and
+				// add new data and write the block.
+				int total_written = 0;
+				int temp_read_array[BLOCK_SIZE];
+				int indirect_index = indirect_first-1s;
+				
+
+				for(int i = k-1; i < (node->rwptr+length)/BLOCK_SIZE + 1;i++)
+				{
+					int this_block = -1;
+					int written_this_block = BLOCK_SIZE - ((node->rwptr)%BLOCK_SIZE);
+					//if the amount to write is less than the space left in block, then just write length
+					written_this_block = written_this_block>length?length:written_this_block;
+					if(i == k-1)
+					{
+						//the first block, this is partially written
+						// check if block is full
+						if(written_this_block == 0)
+							continue;
+						
+						else
+						{
+							//now find the block
+							//direct pointer
+							//k is the first empty data pointer
+							//if k = 12, then data_ptr[11] is partially empty
+							if(k <= 12)
+							{
+								this_block  = node->data_ptrs[i];
+							}
+							else{
+								//indirect pointer points to a partially empty block
+								//find which indirect pointer
+								this_block = node->indirect_ptr_array[indirect_index];
+							}
+							//read the block
+							read_blocks(this_block,1,temp_read_array);
+
+							//then write to it 
+							int j = 0;
+							int m = node->rwptr%BLOCK_SIZE;
+							for(j<written_this_block && m < BLOCK_SIZE)
+							{
+								temp_read_array[m] = buf[j];
+								j++;
+								m++;
+
+							}
+							//write_blocks(this_block,1,&temp_read_array);
+							
+						}
+					}
+					else{
+						if(i < 12)
+						{
+							this_block = node->data_ptrs[i];
+						}
+						else{
+							this_block = indirect_ptr_array[indirect_index];
+						}
+						memcpy(temp_read_array,buf+total_written);
+						
+						//just write to the block 1024 length
+					}
+					write_blocks(this_block,1,&temp_read_array);
+					indirect_index++;
+					total_written += written_this_block;
+					length -= written_this_block;
+					node->size += written_this_block;
+					node->rwptr += written_this_block;
+					//update all the variables
+
+				}
+
+
+			}
+			else 
+				return FILE_ERR3; //file is not open
+		}
+		else 
+			return FILE_ERR2; //file does not exist
+
+	}
+	else
+		return FILE_ERR1; //file ID does not exist
+	// does the file exist
+	// is the file open for writing
+
 
 }
 int sfs_fseek(int fileID, int loc) {
