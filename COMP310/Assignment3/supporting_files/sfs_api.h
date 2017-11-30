@@ -2,7 +2,7 @@
 #define _INCLUDE_SFS_API_H_
 
 #include <stdint.h>
-
+#define SUCCESS 1
 #define MAX_FILE_NAME 20
 #define MAX_EXTENSION_NAME 3
 #define SFS_NAME "MonorinaMSFS"
@@ -17,7 +17,8 @@
 #define INIT_INODE_VAL -1
 #define FAILURE -1
 #define FILE_ERR1 -1 //if new file cannot be created
-#define FILE_ERR3 -2 //if existing file cannot be opened
+#define FILE_ERR2 -2 //if existing file cannot be opened
+#define FILE_ERR3 -3
 //#define NUM_BITMAP_BLOCKS 16 //randomly picked
 //#define BITMAP_BLOCK_START NUM_BLOCKS - NUM_BITMAP_BLOCKS  
 #define NUM_INODES 
@@ -36,7 +37,7 @@ typedef struct inode_t {
     unsigned int uid;
     unsigned int gid;
     unsigned int size;
-    unsigned int inuse; //added
+    //unsigned int inuse; //added
     unsigned int data_ptrs[12];
     unsigned int indirectPointer; // points to a data block that points to other data blocks (Single indirect)
 } inode_t;
