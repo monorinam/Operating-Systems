@@ -1,6 +1,6 @@
 
 #include "sfs_api.h"
-#include "bitmap.h"
+//#include "bitmap.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -54,7 +54,7 @@ int fill_block()
 //this function empties out blocks
 // (when file is either deleted or blocks that were
 // assigned and then not needed)
-int empty_block(int block_num)
+void empty_block(int block_num)
 {
 	//find this block in the free bitmap
 	//then mark the block as free
@@ -71,6 +71,7 @@ int empty_block(int block_num)
 int check_file_exists(char* fname, int *filenum, int *inode_num)
 {
 	*filenum = -1;
+	*inode_num = -1;//initial default values
 	for(int i = 0; i < NUM_FILES; i++)
 	{
 		if(strcmp(fname,root[i].name) == 0)
@@ -89,23 +90,41 @@ int check_file_exists(char* fname, int *filenum, int *inode_num)
 	return FAILURE;
 }
 
+int check_file_id(int fileID)
+{
+	if(fileID >= 0 && fileID < NUM_FILES)
+	{
+		if (fildest.fildes[fileID].inodeIndex >= 0)
+		{
+			if(fildest.use[fileID] == IN_USE)
+				return SUCCESS;
+			else
+				return FILE_ERR3;
+		}
+		else 
+			return FILE_ERR2;
+	}
+	else
+		return FILE_ERR1;
+}
+
 void mksfs(int fresh) {
 	root_position = 0;
 	// Declare and malloc
-	fildest = malloc(sizeof(file_descriptor_table));
+	//fildest = (file_descriptor_table*)malloc(sizeof(file_descriptor_table));
 	//initialize the file descriptor table (to zero it out and init all values
 	for(int i = 0; i < NUM_FILES; i++)
 	{
 		fildest.fildes[i].inodeIndex = INIT_INODE_VAL;
-		fildes.fildes[i].inode = NULL;
+		fildest.fildes[i].inode = NULL;
 		fildest.fildes[i].rwptr = INIT_INODE_VAL;
-		fildest.inuse[i] = NOT_INUSE
+		fildest.use[i] = NOT_INUSE;
 	}
 	//file_descriptor fildes;
 
 	if(fresh)
 	{
-		inode_t zero_node = malloc(sizeof(inode_t));
+		inode_t zero_node;// = (inode_t*)malloc(sizeof(inode_t));
 		int root_blocks = sizeof(root)/BLOCK_SIZE + 1;
 		//remove the filesystem if it exists
 		remove(SFS_NAME);
@@ -119,7 +138,7 @@ void mksfs(int fresh) {
 		super_block.fs_size = NUM_BLOCKS*BLOCK_SIZE; //the file system size
 		super_block.inode_table_len = NUM_INODES;
 		super_block.root_dir_inode = 0;
-		if(fill_block() > -1)
+		if(fill_block() > -1)//should always be zero
 			write_blocks(0,1,&super_block);
 		else
 			exit(0);
@@ -131,10 +150,11 @@ void mksfs(int fresh) {
 				//the first inode has info about root directory
 				//inode_t zero_node = malloc(sizeof(inode_t));
 				zero_node.size = 0;
-				zero_node.mode = x0755;
+				zero_node.mode = 755;
 				zero_node.link_cnt = 1;
 				zero_node.uid = 0;
 				zero_node.gid = 0;
+				zero_node.indirectPointer = -1;
 				//int max_root_blocks = 12 < sizeof(root)/BLOCK_SIZE 
 				//fill the blocks for the direct pointers of the root
 				for(int i = 0; i < root_blocks ; i++)
@@ -143,14 +163,21 @@ void mksfs(int fresh) {
 					
 				}
 				inode_array[0] = zero_node;
+
 				//memset(&zero_node,INITNULL,sizeof(zero_node));
 
 			}
 			else
 			{
 				//inode_array[i] = malloc(sizeof(inode_t));
-				inode_array[i].data_ptrs = -1; //not used yet
-				inode_array[i].inuse = NOT_INUSE
+				inode_array[i].inuse = NOT_INUSE; //mark as unused
+				inode_array[i].indirectPointer = 0; //not used yet, also cannot be zero since superblock
+				for(int j = 0; j < 12;j++)
+				{
+					inode_array[i].data_ptrs[j] = 0;
+				}
+				//inode_array[i].data_ptrs[0] = 0; //this is not possible, since the first block is filled by the superblock
+								//inode_array[i].inuse = NOT_INUSE
 			}
 
 
@@ -171,12 +198,12 @@ void mksfs(int fresh) {
 			root[i].num = INIT_INODE_VAL;
 		}
 		//write root
-		write(zero_node.data_ptrs[0],root_blocks,&root);
+		write_blocks(zero_node.data_ptrs[0],root_blocks,&root);
 		
 
 	}
 	else{
-		if(init_disk.(SFS_NAME, BLOCK_SIZE, NUM_BLOCKS) < 0)
+		if(init_disk(SFS_NAME, BLOCK_SIZE, NUM_BLOCKS) < 0)
 			exit(0);//Failure
 		//read the superblock
 		read_blocks(0,1,&super_block);
@@ -185,7 +212,7 @@ void mksfs(int fresh) {
 		//read the bitmap
 		read_blocks(NUM_BLOCKS-1,1, &free_bit_map);
 		//read the root directory
-		read_blocks(inode_array[0].data_ptrs[0],1 + sizeof(root)/BLOCK_SIZE),&root)
+		read_blocks(inode_array[0].data_ptrs[0],1 + sizeof(root)/BLOCK_SIZE,&root);
 
 
 
@@ -193,9 +220,10 @@ void mksfs(int fresh) {
 	
 }
 int sfs_getnextfilename(char *fname){
-	while (root_position > = 0 && root_position < NUM_FILES)
+	int i = 0;
+	while (root_position >= 0 && root_position < NUM_FILES)
 	{
-		if(root[root_position].num > = 0) //the file exists
+		if(root[root_position].num >= 0) //the file exists
 		{
 			strcpy(fname, root[i].name); //copy the file 
 			root_position++;
@@ -203,11 +231,13 @@ int sfs_getnextfilename(char *fname){
 				return 0; //so return zero
 			return 1; //else non zero return
 		}
+		i++;
 	}
+	return 0;
 }
 int sfs_getfilesize(const char* path){
 	int filenum,inode_num;
-	check_file_exists(path,&filenum,&inode_num);
+	check_file_exists((char *)path,&filenum,&inode_num);
 	if(filenum >= 0)
 	{
 		//file exists
@@ -226,7 +256,7 @@ int find_free_inode()
 	int index = -1;
 	for(int i = 0; i < NUM_INODES; i++)
 	{
-		if(inode_array[i].inuse == NOT_INUSE)
+		if(inode_array[i].data_ptrs[0] == NOT_INUSE)
 		{
 			index = i;
 			break;
@@ -252,8 +282,7 @@ int sfs_fopen(char *name){
 	int filenum;
 	int inode_num;
 	int fileID = check_file_exists(name,&filenum,&inode_num);
-	int inode_num;
-	if(filenum > = 0)
+	if(filenum >= 0)
 	{
 		//file already exists
 		//open and append
@@ -266,8 +295,7 @@ int sfs_fopen(char *name){
 		}
 		//then check if it is in the file directory
 	}
-	// this region is catch all for either if the inode was not found in the fildestable 
-	// or if the file did not exist
+	
 
 	//file does not exist, assign new inode to file, if inode cannot be assigned errno 1 
 	else{
@@ -275,19 +303,24 @@ int sfs_fopen(char *name){
 		if(inode_num < 0)
 			return FILE_ERR1;
 	}
+	// this region is catch all for either if the inode was not found in the fildestable 
+	// or if the file did not exist
+
 	// create new file descriptor here
 	//find the first free file descriptor
-	int fileID = -1;
+	fileID = -1;
 	for(int i = 0; i < NUM_FILES; i++)
 	{
-		if(fildest.use[i] == NOT_INUSE)
+		if(fildest.use[i] == NOT_INUSE){
 			fileID = i;
+			break;
+		}
 	}
 	if(fileID == -1)
 		return FILE_ERR2;
-	fildest.fildes[fd_index]->inode = &inode_array[inode_num];
-	fildest.fildes[fd_index].inodeIndex = inode_num;
-	fildest.fildes[fd_index].rwptr = 0;
+	fildest.fildes[fileID].inode = &(inode_array[inode_num]);
+	fildest.fildes[fileID].inodeIndex = inode_num;
+	fildest.fildes[fileID].rwptr = 0;
 	return fileID;
 
 }
@@ -302,6 +335,7 @@ int sfs_fclose(int fileID) {
 			//update the file descriptor values
 			fildest.fildes[fileID].rwptr = 0;
 			fildest.use[fileID] = NOT_INUSE;
+			return SUCCESS;
 		}
 		else
 			return FILE_ERR1;
@@ -315,7 +349,7 @@ int sfs_fread(int fileID, char *buf, int length) {
 	int check_fid = check_file_id(fileID);
 	if(check_fid == SUCCESS)
 	{
-		inode_t * node = &(fildest.fildes[fileID].inode);
+		inode_t *node = fildest.fildes[fileID].inode;
 		file_descriptor *thisfildes = &(fildest.fildes[fileID]);
 		int total_read = 0;
 		int read_arry[BLOCK_SIZE];
@@ -325,7 +359,8 @@ int sfs_fread(int fileID, char *buf, int length) {
 		int where_in_block = -1;
 		int which_block;
 		int i = thisfildes->rwptr/BLOCK_SIZE;
-		i = i_0;
+		int i_0 = i;
+		//i = i_0;
 		while(length > 0 && i <(thisfildes->rwptr + length)/BLOCK_SIZE)
 		{
 			//for first block, have to read from rwptr to end of block.
@@ -374,37 +409,21 @@ int sfs_fread(int fileID, char *buf, int length) {
 		return check_fid;
 	
 }
-void free_blocks_list(int start, int end, int[] block_array)
-{
-	for(int i = start; i < end; i++)
-	{
-		empty_block(block_array[i]);
-	}
-}
-int check_file_id(int fileID)
-{
-	if(fileID >= 0 && fileID < NUM_FILES)
-	{
-		if (fildest.fildes[fileID].inodeIndex >= 0)
-		{
-			if(fildest.use[fileID] == IN_USE)
-				return SUCCESS;
-			else
-				return FILE_ERR3;
-		}
-		else 
-			return FILE_ERR2;
-	}
-	else
-		return FILE_ERR1;
-}
+// void free_blocks_list(int start, int end, int[] block_array)
+// {
+// 	for(int i = start; i < end; i++)
+// 	{
+// 		empty_block(block_array[i]);
+// 	}
+// }
+
 int sfs_fwrite(int fileID, const char *buf, int length)
 {
 	int check_fid = check_file_id(fileID);
 	if(check_fid == SUCCESS)
 	{
 		//get the inode and the file descriptor
-		inode_t * node = &(fildest.fildes[fileID].inode);
+		inode_t *node = fildest.fildes[fileID].inode;
 		file_descriptor *thisfildes = &(fildest.fildes[fileID]);
 		//first need to assign the blocks before we write to them
 		// make sure all the needed blocks are available to assign
@@ -414,7 +433,7 @@ int sfs_fwrite(int fileID, const char *buf, int length)
 			//need more blocks
 			int indirect_ptr_array[BLOCK_SIZE/sizeof(int)];
 			int first_ptr_index = -1;// index of the first direct pointer we need
-			int direct_needed;
+			//int direct_needed;
 			int indirect_needed;
 			int first_indirect = -1; //flag to indicate this is the first time indirect block is used 
 			int num_blocks_needed = 1  + (thisfildes->rwptr + length - node->size)/BLOCK_SIZE;//round up on int operations
@@ -455,7 +474,7 @@ int sfs_fwrite(int fileID, const char *buf, int length)
 					{
 						if(indirect_ptr_array[i] == NOT_INUSE){
 							first_indirect = i;
-							break
+							break;
 						}
 
 					}
@@ -475,7 +494,7 @@ int sfs_fwrite(int fileID, const char *buf, int length)
 				{
 					//direct block assignment
 					node->data_ptrs[i+first_ptr_index] = fill_block();
-					if(node->data_ptrs[i+first_ptr_index] < 0)
+					if(node->data_ptrs[i+first_ptr_index] == 0)
 						release_flag = i;
 				}
 				else
@@ -546,7 +565,7 @@ int sfs_fwrite(int fileID, const char *buf, int length)
 			
 			i++;
 		}
-		write_blocks(1.NUM_INODE_BLOCKS,&inode_array);
+		write_blocks(1,NUM_INODE_BLOCKS,&inode_array);
 		return total_written;
 
 
@@ -559,7 +578,7 @@ int sfs_fseek(int fileID, int loc) {
 	int check_fid = check_file_id(fileID);
 	if(check_fid == SUCCESS)
 	{
-		inode_t * node = &(fildest.fildes[fileID].inode);
+		inode_t *node = fildest.fildes[fileID].inode;
 		file_descriptor *thisfildes = &(fildest.fildes[fileID]);
 		if(loc > node->size)
 			return FILE_ERR3;
@@ -581,27 +600,27 @@ int sfs_remove(char *file) {
 		return FILE_ERR1;//file does not exist
 	//deallocate the blocks
 	//calculate how many blocks the file contains
-	inode_t * node = inode_array[inode_num];
+	inode_t *node = &inode_array[inode_num];
 	int total_blocks = (node->size)/BLOCK_SIZE;
 	if(total_blocks > 12)
 		read_blocks(node->indirectPointer,1,indirect_ptr_array);
 	for(int i = 0; i < total_blocks;i++)
 	{
 		if(i < 12){
-			empty_block(node->data_ptrs[i])
+			empty_block(node->data_ptrs[i]);
 		}
 		else{
 			empty_block(indirect_ptr_array[i-12]);
 		}
 	}
-	if(node->indirectPointer >= 0)
+	if(node->indirectPointer > 0)
 		empty_block(node->indirectPointer);
 
 	//remove from root directory, and shift all the elements in the root array
 	for(int i = filenum; i < NUM_FILES; i++)
 	{
 		if(root[filenum].num == INIT_INODE_VAL)
-			break
+			break;
 		else
 			root[filenum] = root[filenum + 1];
 	}
@@ -614,6 +633,7 @@ int sfs_remove(char *file) {
 	}
 	//save inode array
 	write_blocks(1,NUM_INODE_BLOCKS,&inode_array);
+	return SUCCESS;
 }
 
 

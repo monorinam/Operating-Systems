@@ -9,7 +9,7 @@
 #define BLOCK_SIZE 1024
 #define NUM_BLOCKS 1024
 #define IN_USE 1
-#define NOT_INUSE 2
+#define NOT_INUSE 0
 #define NUM_INODE_BLOCKS 32 //randomly picked
 #define SB_MAGIC 0xACBD0005
 #define INITNULL 0
@@ -21,8 +21,8 @@
 #define FILE_ERR3 -3
 //#define NUM_BITMAP_BLOCKS 16 //randomly picked
 //#define BITMAP_BLOCK_START NUM_BLOCKS - NUM_BITMAP_BLOCKS  
-#define NUM_INODES 
-#define NUM_FILES NUM_INODES<NUM_BLOCKS?NUM_INODES:NUM_BLOCKS //minimum of number of blocks or number of inodes
+#define NUM_INODES 256 
+#define NUM_FILES NUM_INODES//NUM_INODES < NUM_BLOCKS ? NUM_INODES : NUM_BLOCKS //minimum of number of blocks or number of inodes
 typedef struct superblock_t{
     uint64_t magic;
     uint64_t block_size;
@@ -37,7 +37,7 @@ typedef struct inode_t {
     unsigned int uid;
     unsigned int gid;
     unsigned int size;
-    //unsigned int inuse; //added
+    int inuse; //added
     unsigned int data_ptrs[12];
     unsigned int indirectPointer; // points to a data block that points to other data blocks (Single indirect)
 } inode_t;
@@ -48,7 +48,7 @@ typedef struct inode_t {
  *rwptr    where in the file to start   
  */
 typedef struct file_descriptor {
-    uint64_t inodeIndex;
+    int64_t inodeIndex;
     inode_t* inode; // 
     uint64_t rwptr;
 } file_descriptor;
