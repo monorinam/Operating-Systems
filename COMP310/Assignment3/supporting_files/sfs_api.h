@@ -56,7 +56,7 @@ typedef struct file_descriptor {
 
 typedef struct directory_entry{
     int num; // represents the inode number of the entery. 
-    char name[MAX_FILE_NAME]; // represents the name of the entery. 
+    char name[1+MAX_FILE_NAME]; // represents the name of the entery. 
 }directory_entry;
 
 typedef struct file_descriptor_table{

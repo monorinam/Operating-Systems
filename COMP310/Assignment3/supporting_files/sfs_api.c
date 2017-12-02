@@ -1,4 +1,3 @@
-
 #include "sfs_api.h"
 //#include "bitmap.h"
 #include <stdio.h>
@@ -74,8 +73,12 @@ int check_file_exists(char* fname, int *filenum, int *inode_num)
 	*inode_num = -1;//initial default values
 	for(int i = 0; i < NUM_FILES; i++)
 	{
+		//char *temp = root[i].name; //needs to be assigned to a pointer for strcmp to work
+		char temp[MAX_FILE_NAME];
+		//strncpy(temp,fname,strlen(fname));
 		if(strcmp(fname,root[i].name) == 0)
-			*filenum = i;
+        {	*filenum = i;
+            break;}
 	}
 	if(*filenum == -1)
 		return FAILURE; //not found
@@ -155,6 +158,7 @@ void mksfs(int fresh) {
 				zero_node.uid = 0;
 				zero_node.gid = 0;
 				zero_node.indirectPointer = -1;
+                zero_node.inuse = IN_USE;
 				//int max_root_blocks = 12 < sizeof(root)/BLOCK_SIZE 
 				//fill the blocks for the direct pointers of the root
 				for(int i = 0; i < root_blocks ; i++)
@@ -171,6 +175,7 @@ void mksfs(int fresh) {
 			{
 				//inode_array[i] = malloc(sizeof(inode_t));
 				inode_array[i].inuse = NOT_INUSE; //mark as unused
+				inode_array[i].size = 0;
 				inode_array[i].indirectPointer = 0; //not used yet, also cannot be zero since superblock
 				for(int j = 0; j < 12;j++)
 				{
@@ -196,6 +201,8 @@ void mksfs(int fresh) {
 		for(int i = 0; i < NUM_FILES; i ++)
 		{
 			root[i].num = INIT_INODE_VAL;
+            root[i].name[0] = '\0';
+	//		strncpy(root[i].name,"",sizeof(root[i].name)); 
 		}
 		//write root
 		write_blocks(zero_node.data_ptrs[0],root_blocks,&root);
@@ -256,7 +263,7 @@ int find_free_inode()
 	int index = -1;
 	for(int i = 0; i < NUM_INODES; i++)
 	{
-		if(inode_array[i].data_ptrs[0] == NOT_INUSE)
+		if(inode_array[i].inuse == NOT_INUSE)
 		{
 			index = i;
 			break;
@@ -291,6 +298,7 @@ int sfs_fopen(char *name){
 			//found file; open 
 			fildest.fildes[fileID].rwptr = 0;
 			fildest.use[fileID] = IN_USE;
+			//fildest.fildes[fileID].inodeIndex = inode_num;
 			return fileID;
 		}
 		//then check if it is in the file directory
@@ -299,7 +307,7 @@ int sfs_fopen(char *name){
 
 	//file does not exist, assign new inode to file, if inode cannot be assigned errno 1 
 	else{
-		int inode_num = find_free_inode();
+		inode_num = find_free_inode();
 		if(inode_num < 0)
 			return FILE_ERR1;
 	}
@@ -318,11 +326,30 @@ int sfs_fopen(char *name){
 	}
 	if(fileID == -1)
 		return FILE_ERR2;
+	int i = 0;
+	while(i<NUM_FILES)
+	{
+		if(root[i].num == INIT_INODE_VAL)
+			break;
+		i++;
+	}
+	if(i == NUM_FILES)
+		return FILE_ERR3; //should never happen because root must have free space if files are free
+						  // thats why I dont 
 	fildest.fildes[fileID].inode = &(inode_array[inode_num]);
 	fildest.fildes[fileID].inodeIndex = inode_num;
+	fildest.use[fileID] = IN_USE;
 	fildest.fildes[fileID].rwptr = 0;
-	return fileID;
+	//add the file to root
+	//find the first free root directory element
 
+	//add file
+	root[i].num = inode_num;
+	strncpy(root[i].name,name,1+strlen(name));
+	//save root to SFS disk block
+	write_blocks(inode_array[0].data_ptrs[0],1,&root);
+	return fileID;
+ 
 }
 int sfs_fclose(int fileID) {
 	if(fileID >=0 && fileID < NUM_FILES)
