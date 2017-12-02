@@ -72,7 +72,8 @@ main(int argc, char **argv)
   int ncreate;                  /* Number of files created in directory */
   int error_count = 0;
   int tmp;
-
+  // TODO remove srand!
+  srand(1);
   mksfs(1);                     /* Initialize the file system. */
 
   /* First we open two files and attempt to write data to them.

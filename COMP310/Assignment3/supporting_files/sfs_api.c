@@ -27,11 +27,12 @@ inode_t inode_array[NUM_INODES];
 directory_entry root[NUM_FILES]; //the only directory in the SFS
 int bitmap_start_free;//this stores the first block in the bitmap that is free
 int root_position; //this keeps track of the position in sfs_getnextfilename()
+int inode_blocks;
 ///Helper functions
 int fill_block()
 {
 	//find the first free block
-	int first_free = 129;
+	int first_free = -1;
 	for(int i=0;i<BITMAP_ROW_SIZE;i++)
 	{
 		for(int j = 0; j < 8; j++)
@@ -41,10 +42,13 @@ int fill_block()
 				first_free = i*8 + j;
 				//fill the block
 				USE_BIT(free_bit_map[i],j);
+                break;
 			}
 		}
+        if(first_free >= 0)
+            break;
 	}
-	if(first_free == 129)
+	if(first_free == -1)
 		return -1; //failure
 	else
 		return first_free; //success
@@ -74,7 +78,6 @@ int check_file_exists(char* fname, int *filenum, int *inode_num)
 	for(int i = 0; i < NUM_FILES; i++)
 	{
 		//char *temp = root[i].name; //needs to be assigned to a pointer for strcmp to work
-		char temp[MAX_FILE_NAME];
 		//strncpy(temp,fname,strlen(fname));
 		if(strcmp(fname,root[i].name) == 0)
         {	*filenum = i;
@@ -129,6 +132,7 @@ void mksfs(int fresh) {
 	{
 		inode_t zero_node;// = (inode_t*)malloc(sizeof(inode_t));
 		int root_blocks = sizeof(root)/BLOCK_SIZE + 1;
+        inode_blocks = sizeof(inode_array)/BLOCK_SIZE + 1;
 		//remove the filesystem if it exists
 		remove(SFS_NAME);
 		//then initialize it again
@@ -188,9 +192,9 @@ void mksfs(int fresh) {
 
 		}
 		// write inodes to directory (inodes start at 1s)
-		for(int i = 0; i < NUM_INODE_BLOCKS; i ++)
+		for(int i = 0; i < inode_blocks; i ++)
 			fill_block();
-		write_blocks(1,NUM_INODE_BLOCKS,&inode_array);
+		write_blocks(1,inode_blocks,&inode_array);
 		
 		//save the bitmap
 		//initialize data bitmap
@@ -215,7 +219,7 @@ void mksfs(int fresh) {
 		//read the superblock
 		read_blocks(0,1,&super_block);
 		// read the inode table
-		read_blocks(1,NUM_INODE_BLOCKS,&inode_array);
+		read_blocks(1,inode_blocks,&inode_array);
 		//read the bitmap
 		read_blocks(NUM_BLOCKS-1,1, &free_bit_map);
 		//read the root directory
@@ -279,7 +283,7 @@ int find_free_inode()
 		//mark as used
 		inode_array[index].inuse = IN_USE;
 		inode_array[index].size = 0; //empty for now
-		write_blocks(1,NUM_INODE_BLOCKS,&inode_array);
+		write_blocks(1,inode_blocks,&inode_array);
 		return index;
 		// and save the inode table
 	}
@@ -356,13 +360,13 @@ int sfs_fclose(int fileID) {
 	{
 		//file is valid
 
-		if(fildest.fildes[fileID].inodeIndex >= 0)
+		if(fildest.fildes[fileID].inodeIndex >= 0 && fildest.use[fileID] == IN_USE)
 		{
 			//valid inode
 			//update the file descriptor values
 			fildest.fildes[fileID].rwptr = 0;
 			fildest.use[fileID] = NOT_INUSE;
-			return SUCCESS;
+			return 0;
 		}
 		else
 			return FILE_ERR1;
@@ -379,7 +383,7 @@ int sfs_fread(int fileID, char *buf, int length) {
 		inode_t *node = fildest.fildes[fileID].inode;
 		file_descriptor *thisfildes = &(fildest.fildes[fileID]);
 		int total_read = 0;
-		int read_arry[BLOCK_SIZE];
+		char read_arry[BLOCK_SIZE];
 		//can only read to size
 		if(length+thisfildes->rwptr > node->size)
 			length = node->size - thisfildes->rwptr;
@@ -387,8 +391,11 @@ int sfs_fread(int fileID, char *buf, int length) {
 		int which_block;
 		int i = thisfildes->rwptr/BLOCK_SIZE;
 		int i_0 = i;
+        int indirect_read[BLOCK_SIZE];
+		read_blocks(node->indirectPointer,1,indirect_read);
+
 		//i = i_0;
-		while(length > 0 && i <(thisfildes->rwptr + length)/BLOCK_SIZE)
+		while(length > 0 && i <1+(thisfildes->rwptr + length)/BLOCK_SIZE)
 		{
 			//for first block, have to read from rwptr to end of block.
 			// after first block read the whole block
@@ -399,9 +406,7 @@ int sfs_fread(int fileID, char *buf, int length) {
 			}
 			else
 			{
-				int temp_read[BLOCK_SIZE];
-				read_blocks(node->indirectPointer,1,temp_read);
-				which_block = temp_read[i - 12];
+			    which_block = indirect_read[i - 12];
 			}
 
 			if(i == i_0) //first block find read position
@@ -409,7 +414,8 @@ int sfs_fread(int fileID, char *buf, int length) {
 			else
 				where_in_block = 0;
 			read_blocks(which_block,1,read_arry);
-			memcpy(buf+total_read,read_arry+where_in_block,BLOCK_SIZE-where_in_block);
+            int read_size = (length > BLOCK_SIZE? BLOCK_SIZE : length)-where_in_block;
+			memcpy(buf+total_read,read_arry+where_in_block,read_size);
 			
 			// if(where_in_block == 0)
 			// {
@@ -423,9 +429,9 @@ int sfs_fread(int fileID, char *buf, int length) {
 			// 	memcpy(buf+total_read,read_arry+where_in_block,BLOCK_SIZE-where_in_block);
 			// }
 			//update variables
-			thisfildes->rwptr += BLOCK_SIZE - where_in_block;
-			total_read += BLOCK_SIZE - where_in_block;
-			length -= BLOCK_SIZE - where_in_block;
+			thisfildes->rwptr += read_size;
+			total_read += read_size;
+			length -= read_size;
 			i++;
 			
 		}
@@ -475,6 +481,7 @@ int sfs_fwrite(int fileID, const char *buf, int length)
 				if(node->data_ptrs[i] == NOT_INUSE)
 				{
 					first_ptr_index = i;
+                    break;
 				}
 
 			}
@@ -512,7 +519,7 @@ int sfs_fwrite(int fileID, const char *buf, int length)
 			}
 			//Check if there is enough space
 			//to write the file
-			if(indirect_needed > BLOCK_SIZE/sizeof(int))
+			if(indirect_needed >(int)(BLOCK_SIZE/sizeof(int)))
 				return FILE_ERR3;//not enough space to write
 			//Now assign blocks
 			for(int i = 0; i < num_blocks_needed; i++)
@@ -551,12 +558,12 @@ int sfs_fwrite(int fileID, const char *buf, int length)
 			if(indirect_needed > 0)
 				write_blocks(node->indirectPointer,1,&indirect_ptr_array);
 			node->size+=(BLOCK_SIZE*num_blocks_needed);
-			write_blocks(1,NUM_INODE_BLOCKS,&inode_array);
+			write_blocks(1,inode_blocks,&inode_array);
 		}
 
 		// all blocks assigned and enough space, so now write the blocks
 		int total_written =0;
-		int write_array[BLOCK_SIZE];
+		char write_array[BLOCK_SIZE];
 		int which_block;
 		int where_in_block = -1;
 		int i = thisfildes->rwptr/BLOCK_SIZE;
@@ -592,7 +599,7 @@ int sfs_fwrite(int fileID, const char *buf, int length)
 			
 			i++;
 		}
-		write_blocks(1,NUM_INODE_BLOCKS,&inode_array);
+		write_blocks(1,inode_blocks,&inode_array);
 		return total_written;
 
 
@@ -659,7 +666,7 @@ int sfs_remove(char *file) {
 		inode_array[i] = inode_array[i+1];
 	}
 	//save inode array
-	write_blocks(1,NUM_INODE_BLOCKS,&inode_array);
+	write_blocks(1,inode_blocks,&inode_array);
 	return SUCCESS;
 }
 
