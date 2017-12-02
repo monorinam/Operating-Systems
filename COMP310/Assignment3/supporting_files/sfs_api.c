@@ -461,7 +461,7 @@ int sfs_fwrite(int fileID, const char *buf, int length)
 		//first need to assign the blocks before we write to them
 		// make sure all the needed blocks are available to assign
 		//calculate the first block to write to
-		if(node->size < thisfildes->rwptr+length)
+		if((NUM_BLOCKS*(1+(node->size/BLOCK_SIZE))) < thisfildes->rwptr+length)
 		{
 			//need more blocks
 			int indirect_ptr_array[BLOCK_SIZE/sizeof(int)];
@@ -480,7 +480,7 @@ int sfs_fwrite(int fileID, const char *buf, int length)
 			{
 				if(node->data_ptrs[i] == NOT_INUSE)
 				{
-					first_ptr_index = i;
+					first_ptr_index = i;//the previous block may not be filled up;
                     break;
 				}
 
@@ -557,7 +557,7 @@ int sfs_fwrite(int fileID, const char *buf, int length)
 			//save the inode table with indirect pointers etc
 			if(indirect_needed > 0)
 				write_blocks(node->indirectPointer,1,&indirect_ptr_array);
-			node->size+=(BLOCK_SIZE*num_blocks_needed);
+			//jnode->size+=(BLOCK_SIZE*num_blocks_needed);
 			write_blocks(1,inode_blocks,&inode_array);
 		}
 
@@ -589,14 +589,18 @@ int sfs_fwrite(int fileID, const char *buf, int length)
 				where_in_block = 0; //at the start
 			memcpy(write_array+where_in_block,buf+total_written,BLOCK_SIZE-where_in_block);
 			write_blocks(which_block,1,&write_array);
+            //printf(write_array);
 			if(length - (BLOCK_SIZE - where_in_block) < 0)
 			{ 
 				where_in_block = BLOCK_SIZE - length;
 			}
-			thisfildes->rwptr +=BLOCK_SIZE - where_in_block;
+            //if(length < BLOCK_SIZE - where_in_block)
+             //   thisfildes->rwptr += length;
+            //else
+		    thisfildes->rwptr +=BLOCK_SIZE - where_in_block;
 			total_written += BLOCK_SIZE - where_in_block;
 			length -= BLOCK_SIZE - where_in_block;
-			
+		    node->size += BLOCK_SIZE - where_in_block;	
 			i++;
 		}
 		write_blocks(1,inode_blocks,&inode_array);
