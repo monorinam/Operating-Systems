@@ -395,6 +395,7 @@ int sfs_fread(int fileID, char *buf, int length) {
 		read_blocks(node->indirectPointer,1,indirect_read);
 
 		//i = i_0;
+        //printf("Starting the read\n");
 		while(length > 0)// && i <1+(thisfildes->rwptr + length)/BLOCK_SIZE)
 		{
 			//for first block, have to read from rwptr to end of block.
@@ -408,7 +409,7 @@ int sfs_fread(int fileID, char *buf, int length) {
 			{
 			    which_block = indirect_read[i - 12];
 			}
-
+            //printf("    which block %d \n", which_block);
 			if(i == i_0) //first block find read position
 				where_in_block = thisfildes->rwptr - NUM_BLOCKS*(thisfildes->rwptr/BLOCK_SIZE);
 			else
@@ -501,12 +502,16 @@ int sfs_fwrite(int fileID, const char *buf, int length)
 
 			}
 			if(first_ptr_index == -1) //no free data blocks
+            {
 				indirect_needed = num_blocks_needed;
+                first_ptr_index = 12;//re-assign for consistent maths
+            }
 			else
 				indirect_needed = num_blocks_needed -(12-first_ptr_index);
 			if(indirect_needed > 0)
 			{
 				//indirect pointers needed
+                //printf("        Adding %d indirect ptrs\n", indirect_needed);
 				if(node->indirectPointer == NOT_INUSE)
 				{
 					node->indirectPointer = fill_block();
@@ -537,6 +542,9 @@ int sfs_fwrite(int fileID, const char *buf, int length)
 			if(indirect_needed >(int)(BLOCK_SIZE/sizeof(int)))
 				return FILE_ERR3;//not enough space to write
 			//Now assign blocks
+            printf("        Number of blocks needed %d \n", num_blocks_needed);
+            printf("        First direct pointer %d \n", first_ptr_index);
+            printf("        Indirect Needed %d \n", indirect_needed);
 			for(int i = 0; i < num_blocks_needed; i++)
 			{
 				if(i + first_ptr_index < 12)
@@ -549,7 +557,9 @@ int sfs_fwrite(int fileID, const char *buf, int length)
 				else
 				{
 					//indirect block assignment
-					indirect_ptr_array[i - (12-first_ptr_index)] = fill_block();
+                    int index = i - (12-first_ptr_index)+first_indirect;
+                    printf("        Assigning indirect pointers at index %d .......\n",index);
+					indirect_ptr_array[index] = fill_block();
 					if(indirect_ptr_array[i] < 0)
 						release_flag = i;
 				}
@@ -583,6 +593,8 @@ int sfs_fwrite(int fileID, const char *buf, int length)
 		int where_in_block = -1;
 		int i = thisfildes->rwptr/BLOCK_SIZE;
 		int i_0 = i;//to save
+        //printf("   writing blocks (rwptr=%ld)\n", thisfildes->rwptr);
+		int temp_read[BLOCK_SIZE];
 		while(length > 0)
 		{
 			//find the block
@@ -591,10 +603,10 @@ int sfs_fwrite(int fileID, const char *buf, int length)
 				which_block = node->data_ptrs[i];
 			}
 			else{
-				int temp_read[BLOCK_SIZE];
 				read_blocks(node->indirectPointer,1,temp_read);
 				which_block = temp_read[i - 12];
 			}
+            //printf("   which block: %d\n", which_block);
 			if(i == i_0)
 			{
 				where_in_block = thisfildes->rwptr - NUM_BLOCKS*(thisfildes->rwptr/BLOCK_SIZE);
