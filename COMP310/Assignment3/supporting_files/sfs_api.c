@@ -395,7 +395,7 @@ int sfs_fread(int fileID, char *buf, int length) {
 		read_blocks(node->indirectPointer,1,indirect_read);
 
 		//i = i_0;
-		while(length > 0 && i <1+(thisfildes->rwptr + length)/BLOCK_SIZE)
+		while(length > 0)// && i <1+(thisfildes->rwptr + length)/BLOCK_SIZE)
 		{
 			//for first block, have to read from rwptr to end of block.
 			// after first block read the whole block
@@ -414,7 +414,22 @@ int sfs_fread(int fileID, char *buf, int length) {
 			else
 				where_in_block = 0;
 			read_blocks(which_block,1,read_arry);
-            int read_size = (length > BLOCK_SIZE? BLOCK_SIZE : length)-where_in_block;
+            int read_size;
+            if(where_in_block == 0)
+            {
+                if(length > BLOCK_SIZE)
+                    read_size = BLOCK_SIZE;
+                else
+                    read_size = length;
+            }
+            else
+            {
+                if(where_in_block + length > BLOCK_SIZE)
+                    read_size = BLOCK_SIZE - where_in_block;
+                else
+                    read_size = length;
+            }
+            //int read_size = ((thisfildes->rwptr + length) > BLOCK_SIZE? (BLOCK_SIZE-where_in_block) : length);//-where_in_block;
 			memcpy(buf+total_read,read_arry+where_in_block,read_size);
 			
 			// if(where_in_block == 0)
