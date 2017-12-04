@@ -28,6 +28,7 @@ directory_entry root[NUM_FILES]; //the only directory in the SFS
 int bitmap_start_free;//this stores the first block in the bitmap that is free
 int root_position; //this keeps track of the position in sfs_getnextfilename()
 int inode_blocks;
+int root_blocks;
 ///Helper functions
 int fill_block()
 {
@@ -127,12 +128,12 @@ void mksfs(int fresh) {
 		fildest.use[i] = NOT_INUSE;
 	}
 	//file_descriptor fildes;
+    root_blocks = sizeof(root)/BLOCK_SIZE + 1;
+	inode_blocks = sizeof(inode_array)/BLOCK_SIZE + 1;
 
 	if(fresh)
 	{
 		inode_t zero_node;// = (inode_t*)malloc(sizeof(inode_t));
-		int root_blocks = sizeof(root)/BLOCK_SIZE + 1;
-        inode_blocks = sizeof(inode_array)/BLOCK_SIZE + 1;
 		//remove the filesystem if it exists
 		remove(SFS_NAME);
 		//then initialize it again
@@ -223,7 +224,7 @@ void mksfs(int fresh) {
 		//read the bitmap
 		read_blocks(NUM_BLOCKS-1,1, &free_bit_map);
 		//read the root directory
-		read_blocks(inode_array[0].data_ptrs[0],1 + sizeof(root)/BLOCK_SIZE,&root);
+		read_blocks(inode_array[0].data_ptrs[0],root_blocks,&root);
 
 
 
@@ -351,7 +352,7 @@ int sfs_fopen(char *name){
 	root[i].num = inode_num;
 	strncpy(root[i].name,name,1+strlen(name));
 	//save root to SFS disk block
-	write_blocks(inode_array[0].data_ptrs[0],1,&root);
+	write_blocks(inode_array[0].data_ptrs[0],root_blocks,&root);
 	return fileID;
  
 }
@@ -690,7 +691,7 @@ int sfs_remove(char *file) {
 			root[filenum] = root[filenum + 1];
 	}
 	//write root block
-	write_blocks(inode_array[super_block.root_dir_inode].data_ptrs[0],sizeof(root)/BLOCK_SIZE,&root);
+	write_blocks(inode_array[super_block.root_dir_inode].data_ptrs[0],root_blocks,&root);
 	//remove from inode
 	for(int i = inode_num;i < NUM_INODES;i++)
 	{
