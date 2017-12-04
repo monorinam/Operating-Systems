@@ -7,6 +7,6 @@
 #include <string.h>
 #define SUCCESS 1
 #define FAILURE -1
-extern int producer();
-extern int consumer();
+extern int producer(void);
+extern int consumer(void);
 #endif
