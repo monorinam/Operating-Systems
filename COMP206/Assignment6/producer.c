@@ -1,12 +1,21 @@
 #include "main.h"
-int producer()
+int producer(void)
 {
     FILE* fileTurn;
     FILE* fileWrite;
-    FILE* data = fopen("mydata.txt", "r");
-    char readval = fgetc(data);
-    while((readval = fgetc(data)) != EOF)//as long as char read is not null
+    FILE* data;
+    if((data = fopen("mydata.txt", "r")) == NULL)
     {
+      printf("Error in opening mydata.txt\n");
+      return FAILURE;
+    }
+
+    char readval;
+    //char readval = fgetc(data);
+    do//as long as char read is not null
+    {
+        readval = fgetc(data);
+       
         //check for turn continuously
         while(1){
             fileTurn = fopen("TURN.txt", "r+");
@@ -31,7 +40,7 @@ int producer()
        fputc(readval, fileWrite);
        fclose(fileWrite);
        //give the turn to the consumer to write
-      if((fileTurn = fopen("Turn.txt","w")) == NULL)
+      if((fileTurn = fopen("TURN.txt","w")) == NULL)
       {
           printf("Error opening TURN.txt to write \n");
           return FAILURE;
@@ -39,7 +48,8 @@ int producer()
      fputc('1',fileTurn);
      fclose(fileTurn);
 
-    }
+    }while(readval != '\0' && readval != EOF);
     fclose(data);
+    return SUCCESS;
 }
 

@@ -3,7 +3,7 @@
 #include<unistd.h>
 #include "main.h"
 
-int main()
+int main(void)
 {
     FILE* fileID = fopen("TURN.txt", "w+");
     if(fileID == NULL)
@@ -29,4 +29,4 @@ int main()
        consumer();
    }
    return SUCCESS;
-    
+}
