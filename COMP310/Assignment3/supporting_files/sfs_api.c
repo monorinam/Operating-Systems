@@ -53,7 +53,7 @@ int fill_block()
 		return -1; //failure
 	else
     {
-         printf("Assigning block %d \n",first_free);
+         //printf("Assigning block %d \n",first_free);
 
 		return first_free; //success
            }
@@ -176,9 +176,12 @@ void mksfs(int fresh) {
                 zero_node.inuse = IN_USE;
 				//int max_root_blocks = 12 < sizeof(root)/BLOCK_SIZE 
 				//fill the blocks for the direct pointers of the root
-				for(int i = 0; i < root_blocks ; i++)
+				for(int i = 0; i < 12 ; i++)
 				{
-					zero_node.data_ptrs[i] = fill_block();
+                    if(i < root_blocks)
+				    	zero_node.data_ptrs[i] = fill_block();
+                    else
+                        zero_node.data_ptrs[i] = 0;
 					
 				}
 				inode_array[0] = zero_node;
@@ -203,7 +206,8 @@ void mksfs(int fresh) {
 
 		}
 		// write inodes to directory (inodes start at 1s)
-				write_blocks(1,inode_blocks,&inode_array);
+        //printf("This is in mksfs Writing inode array the root numbers are %d %d \n", inode_array[0].data_ptrs[8],inode_array[0].data_ptrs[10]);
+		write_blocks(1,inode_blocks,&inode_array);
 		
 		//save the bitmap
 		//initialize data bitmap
@@ -299,6 +303,7 @@ int find_free_inode()
 		//mark as used
 		inode_array[index].inuse = IN_USE;
 		inode_array[index].size = 0; //empty for now
+        //printf("Writing inode array the root numbers are %d %d \n", inode_array[0].data_ptrs[8],inode_array[0].data_ptrs[10]);
 		write_blocks(1,inode_blocks,&inode_array);
 		return index;
 		// and save the inode table
@@ -599,6 +604,7 @@ int sfs_fwrite(int fileID, const char *buf, int length)
 			if(indirect_needed > 0)
 				write_blocks(node->indirectPointer,1,&indirect_ptr_array);
 			//jnode->size+=(BLOCK_SIZE*num_blocks_needed);
+            //printf("Writing inode array the root numbers are %d %d \n", inode_array[0].data_ptrs[8],inode_array[0].data_ptrs[10]);
 			write_blocks(1,inode_blocks,&inode_array);
 		}
 
@@ -646,6 +652,7 @@ int sfs_fwrite(int fileID, const char *buf, int length)
 		    node->size += BLOCK_SIZE - where_in_block;	
 			i++;
 		}
+        //printf("Writing inode array the root numbers are %d %d \n", inode_array[0].data_ptrs[8],inode_array[0].data_ptrs[10]);
 		write_blocks(1,inode_blocks,&inode_array);
 		return total_written;
 
@@ -713,6 +720,7 @@ int sfs_remove(char *file) {
 		inode_array[i] = inode_array[i+1];
 	}
 	//save inode array
+    //printf("Writing inode array the root numbers are %d %d \n", inode_array[0].data_ptrs[8],inode_array[0].data_ptrs[10]);
 	write_blocks(1,inode_blocks,&inode_array);
 	return SUCCESS;
 }
