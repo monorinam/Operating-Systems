@@ -10,35 +10,35 @@ int producer(void)
       return FAILURE;
     }
 
-    char readval;
+    char readval, turnval;
     //char readval = fgetc(data);
     do//as long as char read is not null
     {
         readval = fgetc(data);
        
         //check for turn continuously
-        while(1){
+        do{
             fileTurn = fopen("TURN.txt", "r+");
             if(fileTurn == NULL)
             {
                 printf("Error opening shared file TURN.txt \n");
                 return FAILURE;
             }
-            char turnval = fgetc(fileTurn);
+            turnval = fgetc(fileTurn);
             fclose(fileTurn);
-            if(turnval == '0')
-                break;
+           
 
-        }
+        }while(turnval != '0');
         //now open the DATA.txt file and write to it
         // because we have the turn permission
        if( (fileWrite = fopen("DATA.txt","w")) == NULL)
        {
            printf("Error opening file DATA.txt\n");
-           return FAILURE;
        }
+       else{
        fputc(readval, fileWrite);
        fclose(fileWrite);
+     }
        //give the turn to the consumer to write
       if((fileTurn = fopen("TURN.txt","w")) == NULL)
       {
