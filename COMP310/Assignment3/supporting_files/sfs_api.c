@@ -56,6 +56,7 @@ int get_block_if_free()
 	else
     {
          //printf("Assigning block %d \n",first_free);
+         write_blocks(NUM_BLOCKS-1,1,&free_bit_map);
 
 		return first_free; //success
            }
@@ -79,6 +80,7 @@ void empty_block(int block_num)
 	int i = block_num/8;
 	int j = block_num - 8*i;
 	FREE_BIT(free_bit_map[i],j);
+    write_blocks(NUM_BLOCKS-1,1,&free_bit_map);
 
 }
 
@@ -276,6 +278,7 @@ void mksfs(int fresh) {
 		//read the root directory
 		read_blocks(inode_array[0].data_ptrs[0],root_blocks,&root);
         read_blocks(1,inode_blocks,&inode_array);
+        /*
         //Need to rebuild the file descriptor table
         for(int i = 0; i < NUM_FILES; i++)
         {
@@ -283,7 +286,7 @@ void mksfs(int fresh) {
             fildest.fildes[i].inode = &(inode_array[root[i].num]);
             //rwptr is 0 inuse = NOT_INUSE
             fildest.fildes[i].rwptr = 0;
-        }
+        }*/
 
 	}
 	
@@ -612,9 +615,9 @@ int sfs_fwrite(int fileID, const char *buf, int length)
 			if(indirect_needed >(int)(BLOCK_SIZE/sizeof(int)))
 				return FILE_ERR3;//not enough space to write
 			//Now assign blocks
-            printf("        Number of blocks needed %d \n", num_blocks_needed);
-            printf("        First direct pointer %d \n", first_ptr_index);
-            printf("        Indirect Needed %d \n", indirect_needed);
+            //printf("        Number of blocks needed %d \n", num_blocks_needed);
+            //printf("        First direct pointer %d \n", first_ptr_index);
+            //printf("        Indirect Needed %d \n", indirect_needed);
 			for(int i = 0; i < num_blocks_needed; i++)
 			{
 				if(i + first_ptr_index < 12)
@@ -628,7 +631,7 @@ int sfs_fwrite(int fileID, const char *buf, int length)
 				{
 					//indirect block assignment
                     int index = i - (12-first_ptr_index)+first_indirect;
-                    printf("        Assigning indirect pointers at index %d .......\n",index);
+                    //printf("        Assigning indirect pointers at index %d .......\n",index);
 					indirect_ptr_array[index] = fill_block();
 					if(indirect_ptr_array[i] == 1)
 						release_flag = i;
