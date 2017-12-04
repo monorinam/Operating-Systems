@@ -120,20 +120,21 @@ void mksfs(int fresh) {
 	// Declare and malloc
 	//fildest = (file_descriptor_table*)malloc(sizeof(file_descriptor_table));
 	//initialize the file descriptor table (to zero it out and init all values
-	for(int i = 0; i < NUM_FILES; i++)
-	{
-		fildest.fildes[i].inodeIndex = INIT_INODE_VAL;
-		fildest.fildes[i].inode = NULL;
-		fildest.fildes[i].rwptr = INIT_INODE_VAL;
-		fildest.use[i] = NOT_INUSE;
-	}
-	//file_descriptor fildes;
+		//file_descriptor fildes;
     root_blocks = sizeof(root)/BLOCK_SIZE + 1;
 	inode_blocks = sizeof(inode_array)/BLOCK_SIZE + 1;
+    for(int i = 0; i < NUM_FILES; i++)
+	 {
+	    fildest.fildes[i].inodeIndex = INIT_INODE_VAL;
+	    fildest.fildes[i].inode = NULL;
+		fildest.fildes[i].rwptr = INIT_INODE_VAL;
+	    fildest.use[i] = NOT_INUSE;
+	}
+
 
 	if(fresh)
 	{
-		inode_t zero_node;// = (inode_t*)malloc(sizeof(inode_t));
+    	inode_t zero_node;// = (inode_t*)malloc(sizeof(inode_t));
 		//remove the filesystem if it exists
 		remove(SFS_NAME);
 		//then initialize it again
@@ -227,6 +228,12 @@ void mksfs(int fresh) {
 		//read the root directory
 		read_blocks(inode_array[0].data_ptrs[0],root_blocks,&root);
         read_blocks(1,inode_blocks,&inode_array);
+        //Need to rebuild the file descriptor table
+        for(int i = 0; i < NUM_FILES; i++)
+        {
+
+        }
+
 
 
 
