@@ -52,7 +52,11 @@ int fill_block()
 	if(first_free == -1)
 		return -1; //failure
 	else
+    {
+         printf("Assigning block %d \n",first_free);
+
 		return first_free; //success
+           }
 
 }
 //this function empties out blocks
@@ -147,6 +151,8 @@ void mksfs(int fresh) {
 		super_block.fs_size = NUM_BLOCKS*BLOCK_SIZE; //the file system size
 		super_block.inode_table_len = NUM_INODES;
 		super_block.root_dir_inode = 0;
+        int superblock = fill_block();
+        printf("Filled block for superblock (should be 0)%d\n",superblock);
 		if(fill_block() > -1)//should always be zero
 			write_blocks(0,1,&super_block);
 		else
@@ -231,11 +237,11 @@ void mksfs(int fresh) {
         //Need to rebuild the file descriptor table
         for(int i = 0; i < NUM_FILES; i++)
         {
-
+            fildest.fildes[i].inodeIndex = root[i].num;
+            fildest.fildes[i].inode = &(inode_array[root[i].num]);
+            //rwptr is 0 inuse = NOT_INUSE
+            fildest.fildes[i].rwptr = 0;
         }
-
-
-
 
 	}
 	
