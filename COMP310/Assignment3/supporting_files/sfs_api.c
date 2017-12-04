@@ -30,7 +30,9 @@ int root_position; //this keeps track of the position in sfs_getnextfilename()
 int inode_blocks;
 int root_blocks;
 ///Helper functions
-int fill_block()
+
+
+int get_block_if_free()
 {
 	//find the first free block
 	int first_free = -1;
@@ -58,6 +60,14 @@ int fill_block()
 		return first_free; //success
            }
 
+}
+int fill_block()
+{
+    int check = get_block_if_free();
+    if(check == -1)
+        return 0;
+    else
+        return check;
 }
 //this function empties out blocks
 // (when file is either deleted or blocks that were
@@ -127,6 +137,7 @@ void mksfs(int fresh) {
 		//file_descriptor fildes;
     root_blocks = sizeof(root)/BLOCK_SIZE + 1;
 	inode_blocks = sizeof(inode_array)/BLOCK_SIZE + 1;
+    //zero out all global variables before reading them
     for(int i = 0; i < NUM_FILES; i++)
 	 {
 	    fildest.fildes[i].inodeIndex = INIT_INODE_VAL;
@@ -134,7 +145,21 @@ void mksfs(int fresh) {
 		fildest.fildes[i].rwptr = INIT_INODE_VAL;
 	    fildest.use[i] = NOT_INUSE;
 	}
-
+    for(int i = 0; i < NUM_FILES; i++)
+     {
+        root[i].num = -1;
+        root[i].name[0] = '\0';
+     }
+    for(int i = 0; i < NUM_INODES; i++)
+    {
+        inode_array[i].size = 0;
+        //inode_array[i].rwptr = 0;
+        inode_array[i].indirectPointer = 0;
+        for(int j=0;j<12;j++)
+        {
+            inode_array[i].data_ptrs[j] = 0;
+        }
+    }
 
 	if(fresh)
 	{
@@ -151,14 +176,21 @@ void mksfs(int fresh) {
 		super_block.fs_size = NUM_BLOCKS*BLOCK_SIZE; //the file system size
 		super_block.inode_table_len = NUM_INODES;
 		super_block.root_dir_inode = 0;
-        int superblock = fill_block();
-        printf("Filled block for superblock (should be 0)%d\n",superblock);
-		if(fill_block() > -1)//should always be zero
+        int superblock = get_block_if_free();
+        //printf("Filled block for superblock (should be 0)%d\n",superblock);
+		if(superblock == 0)//should always be zero
 			write_blocks(0,1,&super_block);
 		else
 			exit(0);
         for(int i = 0; i < inode_blocks; i ++)
-			fill_block();
+        {
+		    int check =	fill_block();
+            if(check <= 0)
+            {
+                printf("Error assigning inode blocks aborting..\n");
+                exit(EXIT_FAILURE);
+            }
+        }
 
 		// initialize inodes
 		for(int i = 0; i < NUM_INODES; i++)
@@ -179,7 +211,13 @@ void mksfs(int fresh) {
 				for(int i = 0; i < 12 ; i++)
 				{
                     if(i < root_blocks)
-				    	zero_node.data_ptrs[i] = fill_block();
+                    {
+                        int check = fill_block();
+                        if(check > 0)
+				    	    zero_node.data_ptrs[i] = check;
+                        else
+                            exit(EXIT_FAILURE);
+                    }
                     else
                         zero_node.data_ptrs[i] = 0;
 					
@@ -311,7 +349,7 @@ int find_free_inode()
 
 }
 int sfs_fopen(char *name){
-	int filenum;
+   	int filenum;
 	int inode_num;
 	int fileID = check_file_exists(name,&filenum,&inode_num);
 	if(filenum >= 0)
@@ -352,12 +390,19 @@ int sfs_fopen(char *name){
 	if(fileID == -1)
 		return FILE_ERR2;
 	int i = 0;
-	while(i<NUM_FILES)
-	{
-		if(root[i].num == INIT_INODE_VAL)
-			break;
-		i++;
-	}
+    if(filenum >= 0)
+    {
+        //file exists in root, just not open yet
+        i = filenum;
+    }
+    else{
+	    while(i<NUM_FILES)
+    	{
+	    	if(root[i].num == INIT_INODE_VAL)
+		    	break;
+	    	i++;
+    	}
+    }
 	if(i == NUM_FILES)
 		return FILE_ERR3; //should never happen because root must have free space if files are free
 						  // thats why I dont 
@@ -387,6 +432,7 @@ int sfs_fclose(int fileID) {
 			//update the file descriptor values
 			fildest.fildes[fileID].rwptr = 0;
 			fildest.use[fileID] = NOT_INUSE;
+            fildest.fildes[fileID].inodeIndex = INIT_INODE_VAL;
 			return 0;
 		}
 		else
@@ -537,6 +583,8 @@ int sfs_fwrite(int fileID, const char *buf, int length)
 				if(node->indirectPointer == NOT_INUSE)
 				{
 					node->indirectPointer = fill_block();
+                    if(node->indirectPointer < 1)
+                        return FILE_ERR3;
 					first_indirect = 0;
 					for(int k=0;k<BLOCK_SIZE/sizeof(int);k++)
 						indirect_ptr_array[k] = NOT_INUSE;
@@ -582,7 +630,7 @@ int sfs_fwrite(int fileID, const char *buf, int length)
                     int index = i - (12-first_ptr_index)+first_indirect;
                     printf("        Assigning indirect pointers at index %d .......\n",index);
 					indirect_ptr_array[index] = fill_block();
-					if(indirect_ptr_array[i] < 0)
+					if(indirect_ptr_array[i] == 1)
 						release_flag = i;
 				}
 			}
