@@ -701,7 +701,14 @@ int sfs_fwrite(int fileID, const char *buf, int length)
 		    thisfildes->rwptr +=BLOCK_SIZE - where_in_block;
 			total_written += BLOCK_SIZE - where_in_block;
 			length -= BLOCK_SIZE - where_in_block;
-		    node->size += BLOCK_SIZE - where_in_block;	
+            //the amount written depends on where rwptr is and 
+            //how much is written, so update size properly
+            //int size_increase;
+            if(thisfildes->rwptr > node->size)
+               node->size = thisfildes->rwptr;
+           // else
+            //    size_increase = 
+		    //node->size += BLOCK_SIZE - where_in_block;	
 			i++;
 		}
         //printf("Writing inode array the root numbers are %d %d \n", inode_array[0].data_ptrs[8],inode_array[0].data_ptrs[10]);
