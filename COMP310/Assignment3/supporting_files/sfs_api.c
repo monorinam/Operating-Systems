@@ -172,7 +172,7 @@ void mksfs(int fresh) {
 				zero_node.link_cnt = 1;
 				zero_node.uid = 0;
 				zero_node.gid = 0;
-				zero_node.indirectPointer = -1;
+				zero_node.indirectPointer = 0;
                 zero_node.inuse = IN_USE;
 				//int max_root_blocks = 12 < sizeof(root)/BLOCK_SIZE 
 				//fill the blocks for the direct pointers of the root
@@ -498,7 +498,9 @@ int sfs_fwrite(int fileID, const char *buf, int length)
 		//first need to assign the blocks before we write to them
 		// make sure all the needed blocks are available to assign
 		//calculate the first block to write to
-		if((NUM_BLOCKS*(1+(node->size/BLOCK_SIZE))) < thisfildes->rwptr+length)
+        int num_blocks_needed = 1  + (thisfildes->rwptr + length - node->size)/BLOCK_SIZE;//round up on int operations
+
+		if(num_blocks_needed > 0)
 		{
 			//need more blocks
 			int indirect_ptr_array[BLOCK_SIZE/sizeof(int)];
@@ -506,7 +508,6 @@ int sfs_fwrite(int fileID, const char *buf, int length)
 			//int direct_needed;
 			int indirect_needed;
 			int first_indirect = -1; //flag to indicate this is the first time indirect block is used 
-			int num_blocks_needed = 1  + (thisfildes->rwptr + length - node->size)/BLOCK_SIZE;//round up on int operations
 			int release_flag = -1;//flag to show all assigned blocks have to be released
 			if(num_blocks_needed > NUM_BLOCKS)
 				return FILE_ERR3;
