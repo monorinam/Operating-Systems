@@ -150,6 +150,9 @@ void mksfs(int fresh) {
 			write_blocks(0,1,&super_block);
 		else
 			exit(0);
+        for(int i = 0; i < inode_blocks; i ++)
+			fill_block();
+
 		// initialize inodes
 		for(int i = 0; i < NUM_INODES; i++)
 		{
@@ -193,9 +196,7 @@ void mksfs(int fresh) {
 
 		}
 		// write inodes to directory (inodes start at 1s)
-		for(int i = 0; i < inode_blocks; i ++)
-			fill_block();
-		write_blocks(1,inode_blocks,&inode_array);
+				write_blocks(1,inode_blocks,&inode_array);
 		
 		//save the bitmap
 		//initialize data bitmap
@@ -225,6 +226,7 @@ void mksfs(int fresh) {
 		read_blocks(NUM_BLOCKS-1,1, &free_bit_map);
 		//read the root directory
 		read_blocks(inode_array[0].data_ptrs[0],root_blocks,&root);
+        read_blocks(1,inode_blocks,&inode_array);
 
 
 
