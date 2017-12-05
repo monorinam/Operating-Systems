@@ -6,18 +6,19 @@ LDFLAGS = `pkg-config fuse --cflags --libs`
 ifdef TEST1
 SOURCES= disk_emu.c sfs_api.c sfs_test.c sfs_api.h
 else
+ifdef TEST2
 SOURCES= disk_emu.c sfs_api.c sfs_test2.c sfs_api.h
+else
+SOURCES= disk_emu.c sfs_api.c fuse_wrappers.c sfs_api.h
 endif
-
-#SOURCES= disk_emu.c sfs_api.c sfs_test2.c sfs_api.h
-#SOURCES= disk_emu.c sfs_api.c fuse_wrappers.c sfs_api.h
+endif
 
 #if you wish to create your own test - you can do it using this
 #SOURCES= disk_emu.c sfs_api.c sfs_mytest.c sfs_api.h
 
 
 OBJECTS=$(SOURCES:.c=.o)
-EXECUTABLE= MonorinaSFS
+EXECUTABLE= Monorina_Mukhopadhyay_sfs
 
 all: $(SOURCES) $(HEADERS) $(EXECUTABLE)
 
@@ -28,4 +29,4 @@ $(EXECUTABLE): $(OBJECTS)
 	gcc $(CFLAGS) $< -o $@
 
 clean:
-	rm -rf *.o *~ $(EXECUTABLE)
+	rm -rf *.o *.disk *~ $(EXECUTABLE)

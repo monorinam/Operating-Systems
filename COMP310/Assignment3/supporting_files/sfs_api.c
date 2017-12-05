@@ -195,9 +195,9 @@ void mksfs(int fresh) {
 	{
     	inode_t zero_node;// = (inode_t*)malloc(sizeof(inode_t));
 		//remove the filesystem if it exists
-		remove(SFS_NAME);
+		remove(LASTNAME_FIRSTNAME_DISK);
 		//then initialize it again
-		init_fresh_disk(SFS_NAME, BLOCK_SIZE, NUM_BLOCKS);
+		init_fresh_disk(LASTNAME_FIRSTNAME_DISK, BLOCK_SIZE, NUM_BLOCKS);
 
 		//write super block
 		//initialize super block first
@@ -295,7 +295,7 @@ void mksfs(int fresh) {
 
 	}
 	else{
-		if(init_disk(SFS_NAME, BLOCK_SIZE, NUM_BLOCKS) < 0)
+		if(init_disk(LASTNAME_FIRSTNAME_DISK, BLOCK_SIZE, NUM_BLOCKS) < 0)
 			exit(0);//Failure
 		//read the superblock
 		read_blocks(0,1,&super_block);

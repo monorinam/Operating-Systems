@@ -5,7 +5,6 @@
 #define SUCCESS 1
 #define MAX_FILE_NAME 20
 #define MAX_EXTENSION_NAME 3
-#define SFS_NAME "MonorinaMSFS"
 #define BLOCK_SIZE 1024
 #define NUM_BLOCKS 1024
 #define IN_USE 1
@@ -19,6 +18,7 @@
 #define FILE_ERR1 -1 //if new file cannot be created
 #define FILE_ERR2 -2 //if existing file cannot be opened
 #define FILE_ERR3 -3
+#define MAXFILENAME 21
 //#define NUM_BITMAP_BLOCKS 16 //randomly picked
 //#define BITMAP_BLOCK_START NUM_BLOCKS - NUM_BITMAP_BLOCKS  
 #define NUM_INODES 256 
