@@ -808,7 +808,8 @@ int sfs_remove(char *file) {
 		empty_block(node->indirectPointer);
         node->indirectPointer = INIT_INODE_VAL;
     }
-
+    node->size = 0;
+    node->inuse = NOT_INUSE;
 	//remove from root directory, and shift all the elements in the root array
     printf("Temp\n");
 	for(int i = filenum; i < NUM_FILES; i++)
