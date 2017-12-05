@@ -777,41 +777,51 @@ int sfs_remove(char *file) {
 	int filenum,inode_num;
 	int indirect_ptr_array[BLOCK_SIZE/sizeof(int)];
 	int fileID = check_file_exists(file,&filenum,&inode_num);
-	if(fileID == FAILURE)
+	if(filenum == FAILURE)
 		return FILE_ERR1;//file does not exist
 	//deallocate the blocks
 	//calculate how many blocks the file contains
 	inode_t *node = &inode_array[inode_num];
-	int total_blocks = (node->size)/BLOCK_SIZE;
+	int total_blocks =1+ (node->size)/BLOCK_SIZE;
 	if(total_blocks > 12)
-		read_blocks(node->indirectPointer,1,indirect_ptr_array);
+		read_blocks(node->indirectPointer,1,&indirect_ptr_array);
 	for(int i = 0; i < total_blocks;i++)
 	{
 		if(i < 12){
 			empty_block(node->data_ptrs[i]);
+            node->data_ptrs[i] = INIT_INODE_VAL;
 		}
 		else{
 			empty_block(indirect_ptr_array[i-12]);
 		}
 	}
-	if(node->indirectPointer > 0)
+	if(node->indirectPointer > 0){
 		empty_block(node->indirectPointer);
+        node->indirectPointer = INIT_INODE_VAL;
+    }
 
 	//remove from root directory, and shift all the elements in the root array
+    printf("Temp\n");
 	for(int i = filenum; i < NUM_FILES; i++)
 	{
 		if(root[filenum].num == INIT_INODE_VAL)
 			break;
 		else
-			root[filenum] = root[filenum + 1];
+			root[i] = root[i + 1];
 	}
 	//write root block
-	write_blocks(inode_array[super_block.root_dir_inode].data_ptrs[0],root_blocks,&root);
-	//remove from inode
+	write_blocks(inode_array[0].data_ptrs[0],root_blocks,&root);
+	//remove from inod
+    /*e
 	for(int i = inode_num;i < NUM_INODES;i++)
 	{
 		inode_array[i] = inode_array[i+1];
-	}
+	}*/
+    //mark the inode as usued and clear it out
+    inode_array[inode_num].inuse = NOT_INUSE;
+    inode_array[inode_num].size = 0;
+    if(fileID >= 0)
+        sfs_fclose(fileID);
 	//save inode array
     //printf("Writing inode array the root numbers are %d %d \n", inode_array[0].data_ptrs[8],inode_array[0].data_ptrs[10]);
 	write_blocks(1,inode_blocks,&inode_array);

@@ -14,7 +14,7 @@
 #define SB_MAGIC 0xACBD0005
 #define INITNULL 0
 #define DIR_BLOCK_START 1 + NUM_INODE_BLOCKS //starts at 33
-#define INIT_INODE_VAL -1
+#define INIT_INODE_VAL 0
 #define FAILURE -1
 #define FILE_ERR1 -1 //if new file cannot be created
 #define FILE_ERR2 -2 //if existing file cannot be opened
