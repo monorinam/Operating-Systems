@@ -18,11 +18,9 @@
 #define FILE_ERR1 -1 //if new file cannot be created
 #define FILE_ERR2 -2 //if existing file cannot be opened
 #define FILE_ERR3 -3
-#define MAXFILENAME 21
-//#define NUM_BITMAP_BLOCKS 16 //randomly picked
-//#define BITMAP_BLOCK_START NUM_BLOCKS - NUM_BITMAP_BLOCKS  
+#define MAXFILENAME 21 // Added so fuse will compile
 #define NUM_INODES 256 
-#define NUM_FILES NUM_INODES//NUM_INODES < NUM_BLOCKS ? NUM_INODES : NUM_BLOCKS //minimum of number of blocks or number of inodes
+#define NUM_FILES NUM_INODES
 typedef struct superblock_t{
     uint64_t magic;
     uint64_t block_size;
@@ -56,9 +54,11 @@ typedef struct file_descriptor {
 
 typedef struct directory_entry{
     int num; // represents the inode number of the entery. 
-    char name[1+MAX_FILE_NAME]; // represents the name of the entery. 
+    char name[1+MAX_FILE_NAME]; 
+    // represents the name of the entery.(added 1 for null) 
 }directory_entry;
-
+// Created new structure to store file descriptors
+// And whether the files are in use or not
 typedef struct file_descriptor_table{
     file_descriptor fildes[NUM_FILES];
     int use[NUM_FILES]; // IN_USE or NOT_INUSE
