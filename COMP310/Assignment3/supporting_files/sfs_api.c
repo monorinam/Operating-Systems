@@ -484,25 +484,20 @@ int sfs_fopen(char *name){
 //And clear the inode index to null, and rwptr to 0, so that
 //this index of "fildes" can be reused
 int sfs_fclose(int fileID) {
-	if(fileID >=0 && fileID < NUM_FILES)
-	{
-		//file is valid
+    if(check_file_id(fileID) != SUCCESS)
+        return FILE_ERR1;
 
-		if(fildest.fildes[fileID].inodeIndex >= 0 && fildest.use[fileID] == IN_USE)
-		{
-			//valid inode
-			//update the file descriptor values
-			fildest.fildes[fileID].rwptr = 0;
-			fildest.use[fileID] = NOT_INUSE;
-            fildest.fildes[fileID].inodeIndex = INIT_INODE_VAL;
-			return 0;
-		}
-		else
-			return FILE_ERR1;
-
-	}
-	else
-		return FILE_ERR1; //fileID not valid
+    if(fildest.fildes[fileID].inodeIndex >= 0 && fildest.use[fileID] == IN_USE)
+    {
+        //valid inode
+        //update the file descriptor values
+        fildest.fildes[fileID].rwptr = 0;
+        fildest.use[fileID] = NOT_INUSE;
+        fildest.fildes[fileID].inodeIndex = INIT_INODE_VAL;
+        return 0;
+    }
+    else
+        return FILE_ERR1;
 
 }
 // Read function
@@ -792,24 +787,35 @@ int sfs_fwrite(int fileID, const char *buf, int length)
     return total_written;
 
 }
-
+// Function to move the rwptr to the desired location
+//          - Checks the file is open
+//          - If yes, then checks if the loc is within the size
+//          - If yes, then moves rwptr to loc
+//          - If no, returns an error
 int sfs_fseek(int fileID, int loc) {
 	int check_fid = check_file_id(fileID);
-	if(check_fid == SUCCESS)
-	{
-		inode_t *node = fildest.fildes[fileID].inode;
-		file_descriptor *thisfildes = &(fildest.fildes[fileID]);
-		if(loc > node->size)
-			return FILE_ERR3;
-		else
-		{
-			thisfildes->rwptr = loc;
-			return SUCCESS;
-		}
-	}
-	else
-		return check_fid;
+    if(check_fid != SUCCESS)
+        return check_fid;
+    inode_t *node = fildest.fildes[fileID].inode;
+    file_descriptor *thisfildes = &(fildest.fildes[fileID]);
+    // Cannot seek the given location
+    if(loc > node->size)
+        return FILE_ERR3;
+    else
+    {
+        thisfildes->rwptr = loc;
+        return SUCCESS;
+    }
 }
+// Removes a file from the root directory
+//      - Checks filename
+//      - Find the file in root and inode arrays
+//      - If the file is open, close it
+//      - If it exists, then shifts the root left
+//      - (Root is always continuous)
+//      - Empties out the inode blocks that were attached
+//      - To the file
+//      - And zeroes out the given inode
 int sfs_remove(char *file) {
     if(check_filename(file) == FAILURE)
         return FILE_ERR1;
@@ -817,9 +823,13 @@ int sfs_remove(char *file) {
 	int filenum,inode_num;
 	int indirect_ptr_array[BLOCK_SIZE/sizeof(int)];
 	int fileID = check_file_exists(file,&filenum,&inode_num);
+    //file does not exist
+
 	if(filenum == FAILURE)
-		return FILE_ERR1;//file does not exist
-	//deallocate the blocks
+		return FILE_ERR1;
+    if(fileID >= 0)
+        sfs_fclose(fileID);
+    //deallocate the blocks
 	//calculate how many blocks the file contains
 	inode_t *node = &inode_array[inode_num];
 	int total_blocks =1+ (node->size)/BLOCK_SIZE;
@@ -851,19 +861,12 @@ int sfs_remove(char *file) {
 	}
 	//write root block
 	write_blocks(inode_array[0].data_ptrs[0],root_blocks,&root);
-	//remove from inod
-    /*e
-	for(int i = inode_num;i < NUM_INODES;i++)
-	{
-		inode_array[i] = inode_array[i+1];
-	}*/
     //mark the inode as usued and clear it out
     inode_array[inode_num].inuse = NOT_INUSE;
     inode_array[inode_num].size = 0;
     if(fileID >= 0)
         sfs_fclose(fileID);
 	//save inode array
-    //printf("Writing inode array the root numbers are %d %d \n", inode_array[0].data_ptrs[8],inode_array[0].data_ptrs[10]);
 	write_blocks(1,inode_blocks,&inode_array);
 	return SUCCESS;
 }
