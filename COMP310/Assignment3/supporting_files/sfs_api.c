@@ -83,6 +83,33 @@ void empty_block(int block_num)
     write_blocks(NUM_BLOCKS-1,1,&free_bit_map);
 
 }
+// This function checks the file name
+// File names can have a max of 16 characters, 
+// 1 dot and 3 char extensions
+int check_filename(char *fname)
+{
+    int num_name_chars = 0;//stores number of names
+    int num_dots = 0; //stores number of dots
+    int num_extens = 0; //stores number of extension chars
+    int i = 0;
+    while(i < (1+MAX_FILE_NAME))
+    {
+        if(fname[i] == '\0')
+            break;
+        if(fname[i] == '.')
+            num_dots += 1;
+        else if(num_dots > 0)
+            num_extens += 1;
+        else
+            num_name_chars += 1;
+    }
+    if(num_dots > 1 || num_name_chars > 16 || num_extens > 3)
+        return FAILURE;
+    else
+        return SUCCESS;
+
+}
+
 
 //Check if a file name already exists
 //if so, find it in the inode array and the file descriptor table
