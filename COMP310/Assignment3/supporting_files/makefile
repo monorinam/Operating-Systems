@@ -3,7 +3,12 @@ CFLAGS = -c -g -Wall -std=gnu99 `pkg-config fuse --cflags --libs`
 LDFLAGS = `pkg-config fuse --cflags --libs`
 
 # Uncomment on of the following three lines to compile
-SOURCES= disk_emu.c sfs_api.c little_test.c sfs_api.h
+ifdef TEST1
+SOURCES= disk_emu.c sfs_api.c sfs_test.c sfs_api.h
+else
+SOURCES= disk_emu.c sfs_api.c sfs_test2.c sfs_api.h
+endif
+
 #SOURCES= disk_emu.c sfs_api.c sfs_test2.c sfs_api.h
 #SOURCES= disk_emu.c sfs_api.c fuse_wrappers.c sfs_api.h
 

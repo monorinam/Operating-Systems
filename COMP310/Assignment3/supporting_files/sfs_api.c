@@ -320,22 +320,22 @@ void mksfs(int fresh) {
 	
 }
 int sfs_getnextfilename(char *fname){
-	int i = 0;
     if(check_filename(fname) == FAILURE)
         return FILE_ERR1;
-	while (root_position >= 0 && root_position < NUM_FILES)
-	{
-		if(root[root_position].num >= 0) //the file exists
+//	while (root_position >= 0 && root_position < NUM_FILES)
+//	{
+		if(root[root_position].num > 0) //the file exists
 		{
-			strcpy(fname, root[i].name); //copy the file 
+			strcpy(fname, root[root_position].name); //copy the file 
 			root_position++;
 			if(root_position == NUM_FILES) //last file in directory
 				return 0; //so return zero
 			return 1; //else non zero return
 		}
-		i++;
-	}
-	return 0;
+        else
+            return 0; //since root is continuous
+
+	//return 0;
 }
 int sfs_getfilesize(const char* path){
     if(check_filename((char *)path) == FAILURE)
