@@ -102,6 +102,7 @@ int check_filename(char *fname)
             num_extens += 1;
         else
             num_name_chars += 1;
+        i++;
     }
     if(num_dots > 1 || num_name_chars > 16 || num_extens > 3)
         return FAILURE;
@@ -320,6 +321,8 @@ void mksfs(int fresh) {
 }
 int sfs_getnextfilename(char *fname){
 	int i = 0;
+    if(check_filename(fname) == FAILURE)
+        return FILE_ERR1;
 	while (root_position >= 0 && root_position < NUM_FILES)
 	{
 		if(root[root_position].num >= 0) //the file exists
@@ -335,6 +338,8 @@ int sfs_getnextfilename(char *fname){
 	return 0;
 }
 int sfs_getfilesize(const char* path){
+    if(check_filename((char *)path) == FAILURE)
+        return FILE_ERR1;
 	int filenum,inode_num;
 	check_file_exists((char *)path,&filenum,&inode_num);
 	if(filenum >= 0)
@@ -379,6 +384,8 @@ int find_free_inode()
 
 }
 int sfs_fopen(char *name){
+    if(check_filename(name) == FAILURE)
+        return FILE_ERR1;
    	int filenum;
 	int inode_num;
 	int fileID = check_file_exists(name,&filenum,&inode_num);
@@ -773,6 +780,8 @@ int sfs_fseek(int fileID, int loc) {
 		return check_fid;
 }
 int sfs_remove(char *file) {
+    if(check_filename(file) == FAILURE)
+        return FILE_ERR1;
 	//find the file index
 	int filenum,inode_num;
 	int indirect_ptr_array[BLOCK_SIZE/sizeof(int)];
