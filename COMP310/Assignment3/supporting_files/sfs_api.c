@@ -505,285 +505,292 @@ int sfs_fclose(int fileID) {
 		return FILE_ERR1; //fileID not valid
 
 }
+// Read function
+// Algorithm:
+//      - Find the inode, and file descriptor table
+//      - Then find the first block to be read
+//      - Find how much of the block to read
+//      - Copy the part of the block to buf
+//      - Continue doing this for other blocks until length = 0
+//      - Going through both direct and indirect pointers
+//      - If size is less than length, then read to end of file
+//
 int sfs_fread(int fileID, char *buf, int length) {
 	int check_fid = check_file_id(fileID);
-	if(check_fid == SUCCESS)
-	{
-		inode_t *node = fildest.fildes[fileID].inode;
-		file_descriptor *thisfildes = &(fildest.fildes[fileID]);
-		int total_read = 0;
-		char read_arry[BLOCK_SIZE];
-		//can only read to size
-		if(length+thisfildes->rwptr > node->size)
-			length = node->size - thisfildes->rwptr;
-		int where_in_block = -1;
-		int which_block;
-		int i = thisfildes->rwptr/BLOCK_SIZE;
-		int i_0 = i;
-        int indirect_read[BLOCK_SIZE];
-		read_blocks(node->indirectPointer,1,indirect_read);
+    if(check_fid != SUCCESS)
+        return check_fid;
+    // Valid file here
+    // So start the reading
+    inode_t *node = fildest.fildes[fileID].inode;
+    file_descriptor *thisfildes = &(fildest.fildes[fileID]);
+    int total_read = 0;
+    char read_arry[BLOCK_SIZE];
+    //can only read to size, so curtail length if needed
+    if(length+thisfildes->rwptr > node->size)
+        length = node->size - thisfildes->rwptr;
+    int where_in_block = -1;
+    int which_block;
+    //First block to read
+    int i = thisfildes->rwptr/BLOCK_SIZE;
+    //Variable to store the first block read (since rwptr changes in the loop)
+    int i_0 = i;
+    //Read the indirect blocks (if they are empty this reads garbage)
+    //But they are only used if the indirectpointer is not empty
+    int indirect_read[BLOCK_SIZE];
+    read_blocks(node->indirectPointer,1,indirect_read);
 
-		//i = i_0;
-        //printf("Starting the read\n");
-		while(length > 0)// && i <1+(thisfildes->rwptr + length)/BLOCK_SIZE)
-		{
-			//for first block, have to read from rwptr to end of block.
-			// after first block read the whole block
-			//find the block
-			if(i < 12)
-			{
-				which_block = node->data_ptrs[i];
-			}
-			else
-			{
-			    which_block = indirect_read[i - 12];
-			}
-            //printf("    which block %d \n", which_block);
-			if(i == i_0) //first block find read position
-				where_in_block = thisfildes->rwptr - NUM_BLOCKS*(thisfildes->rwptr/BLOCK_SIZE);
-			else
-				where_in_block = 0;
-			read_blocks(which_block,1,read_arry);
-            int read_size;
-            if(where_in_block == 0)
-            {
-                if(length > BLOCK_SIZE)
-                    read_size = BLOCK_SIZE;
-                else
-                    read_size = length;
-            }
+    while(length > 0)    {
+        //for first block, have to read from rwptr to end of block.
+        // after first block read the whole block
+        //
+        //find the block
+        if(i < 12)
+        {
+            which_block = node->data_ptrs[i];
+        }
+        else
+        {
+            which_block = indirect_read[i - 12];
+        }
+        //Find the read position in the first block
+        //If not the first block, then starts reading
+        //at the beginning of the block
+        if(i == i_0) //first block find read position
+            where_in_block = thisfildes->rwptr - NUM_BLOCKS*(thisfildes->rwptr/BLOCK_SIZE);
+        else
+            where_in_block = 0;
+        // Read the block
+        read_blocks(which_block,1,read_arry);
+        // Find the size to be read in this block
+        // If reading from the beginning of the block
+        // Then either read to end of the block (BLOCK_SIZE)
+        // or read to length if length is smaller
+        // If reading from an offset, then either read to
+        // length or BLOCKSIZE, whichever is smaller
+        //
+        int read_size;
+        if(where_in_block == 0)
+        {
+            if(length > BLOCK_SIZE)
+                read_size = BLOCK_SIZE;
             else
-            {
-                if(where_in_block + length > BLOCK_SIZE)
-                    read_size = BLOCK_SIZE - where_in_block;
-                else
-                    read_size = length;
-            }
-            //int read_size = ((thisfildes->rwptr + length) > BLOCK_SIZE? (BLOCK_SIZE-where_in_block) : length);//-where_in_block;
-			memcpy(buf+total_read,read_arry+where_in_block,read_size);
-			
-			// if(where_in_block == 0)
-			// {
-			// 	//read whole block, add to buffer
-			// 	memcpy(buf+total_read,read_arry,BLOCK_SIZE);
-
-			// }
-			// else
-			// {
-			// 	//find position in block and read from there
-			// 	memcpy(buf+total_read,read_arry+where_in_block,BLOCK_SIZE-where_in_block);
-			// }
-			//update variables
-			thisfildes->rwptr += read_size;
-			total_read += read_size;
-			length -= read_size;
-			i++;
-			
-		}
-		return total_read;
-
-	}
-	else
-		return check_fid;
-	
+                read_size = length;
+        }
+        else
+        {
+            if(where_in_block + length > BLOCK_SIZE)
+                read_size = BLOCK_SIZE - where_in_block;
+            else
+                read_size = length;
+        }
+        // Copy amount read_size to the buf
+        memcpy(buf+total_read,read_arry+where_in_block,read_size);
+        
+        //update variables
+        thisfildes->rwptr += read_size;
+        total_read += read_size;
+        length -= read_size;
+        i++;
+        
+    }
+    return total_read;	
 }
-// void free_blocks_list(int start, int end, int[] block_array)
-// {
-// 	for(int i = start; i < end; i++)
-// 	{
-// 		empty_block(block_array[i]);
-// 	}
-// }
-
+//Function to write to a file
+//      - First name sure file is open
+//      - Then find the number of blocks needed to write
+//      - If number of blocks needed is more than those left
+//      - Then abort, otherwise assign blocks
+//      - If a block cannot be assigned, release all blocks
+//      - and abort.
+//      - Once all blocks are assigned, write the same way
+//      - as read was done
+//      (This should be done in several functions, but I did not have time 
+//      to modify it so it is quite long)
 int sfs_fwrite(int fileID, const char *buf, int length)
 {
 	int check_fid = check_file_id(fileID);
-	if(check_fid == SUCCESS)
-	{
-		//get the inode and the file descriptor
-		inode_t *node = fildest.fildes[fileID].inode;
-		file_descriptor *thisfildes = &(fildest.fildes[fileID]);
-		//first need to assign the blocks before we write to them
-		// make sure all the needed blocks are available to assign
-		//calculate the first block to write to
-        int num_blocks_needed = 1  + (thisfildes->rwptr + length)/BLOCK_SIZE;//round up on int operations
-        int blocks_assigned;
-        if(node->size == 0)
-            blocks_assigned = 0;
-        else
-            blocks_assigned = 1 + (node->size/BLOCK_SIZE);
-        num_blocks_needed -= blocks_assigned;
-
-		if(num_blocks_needed > 0)
-		{
-			//need more blocks
-			int indirect_ptr_array[BLOCK_SIZE/sizeof(int)];
-			int first_ptr_index = -1;// index of the first direct pointer we need
-			//int direct_needed;
-			int indirect_needed;
-			int first_indirect = -1; //flag to indicate this is the first time indirect block is used 
-			int release_flag = -1;//flag to show all assigned blocks have to be released
-			if(num_blocks_needed > NUM_BLOCKS)
-				return FILE_ERR3;
-			
-			//check if all direct pointers are filled up
-			//if so, we have to start at an indirect pointer block
-			for(int i = 0; i < 12; i++)
-			{
-				if(node->data_ptrs[i] == NOT_INUSE)
-				{
-					first_ptr_index = i;//the previous block may not be filled up;
-                    break;
-				}
-
-			}
-			if(first_ptr_index == -1) //no free data blocks
+	if(check_fid != SUCCESS)
+        return check_fid;
+	//get the inode and the file descriptor
+    inode_t *node = fildest.fildes[fileID].inode;
+    file_descriptor *thisfildes = &(fildest.fildes[fileID]);
+    // STEP 1:
+    // ASSIGN ALL NECESSARY BLOCKS
+    //      - FIRST MAKE SURE ALL NEEDED BLOCKS ARE AVAILABLE
+    //      - THEN DO THE ASSIGNMENT
+    //Calculate the total blocks needed
+    int num_blocks_needed = 1  + (thisfildes->rwptr + length)/BLOCK_SIZE;//round up on int operations
+    //Find how many blocks are assigned
+    int blocks_assigned;
+    // If size of the file is zero, no blocks are assigned (edge case)
+    if(node->size == 0)
+        blocks_assigned = 0;
+    else
+        blocks_assigned = 1 + (node->size/BLOCK_SIZE);
+    // Find number of blocks that needed to be assigned
+    num_blocks_needed -= blocks_assigned;
+    // ********* Block assignment ***********
+    if(num_blocks_needed > 0)
+    {
+        int indirect_ptr_array[BLOCK_SIZE/sizeof(int)];
+        int first_ptr_index = -1;// index of the first direct pointer we need
+        int indirect_needed;
+        //flag to indicate this is the first time indirect block is used 
+        int first_indirect = -1; 
+        int release_flag = -1;//flag to show all assigned blocks have to be released
+        // Not enough blocks available
+        if(num_blocks_needed > NUM_BLOCKS)
+            return FILE_ERR3;
+        
+        //check if all direct pointers are filled up
+        //if so, we have to start at an indirect pointer block
+        for(int i = 0; i < 12; i++)
+        {
+            if(node->data_ptrs[i] == NOT_INUSE)
             {
-				indirect_needed = num_blocks_needed;
-                first_ptr_index = 12;//re-assign for consistent maths
+                first_ptr_index = i;//the previous block may not be filled up;
+                break;
             }
-			else
-				indirect_needed = num_blocks_needed -(12-first_ptr_index);
-			if(indirect_needed > 0)
-			{
-				//indirect pointers needed
-                //printf("        Adding %d indirect ptrs\n", indirect_needed);
-				if(node->indirectPointer == NOT_INUSE)
-				{
-					node->indirectPointer = fill_block();
-                    if(node->indirectPointer < 1)
-                        return FILE_ERR3;
-					first_indirect = 0;
-					for(int k=0;k<BLOCK_SIZE/sizeof(int);k++)
-						indirect_ptr_array[k] = NOT_INUSE;
-				}
-				//first load the inode pointer block
-				else{
 
-					read_blocks(node->indirectPointer,1,indirect_ptr_array);
-					//how much space is left in indirect pointer?
-					for(int i = 0; i < BLOCK_SIZE/sizeof(int);i++)
-					{
-						if(indirect_ptr_array[i] == NOT_INUSE){
-							first_indirect = i;
-							break;
-						}
+        }
+        if(first_ptr_index == -1) //no free direct blocks
+        {
+            indirect_needed = num_blocks_needed;
+            first_ptr_index = 12;//re-assign for consistent maths
+        }
+        else
+            indirect_needed = num_blocks_needed -(12-first_ptr_index);
+        // ****** Assign indirect blocks *******
+        if(indirect_needed > 0)
+        {
+            //indirect pointers needed
+            if(node->indirectPointer == NOT_INUSE)
+            {
+                node->indirectPointer = fill_block();
+                if(node->indirectPointer < 1)
+                    return FILE_ERR3;
+                first_indirect = 0;
+                for(int k=0;k<BLOCK_SIZE/sizeof(int);k++)
+                    indirect_ptr_array[k] = NOT_INUSE;
+            }
+            //first load the inode pointer block
+            else{
 
-					}
+                read_blocks(node->indirectPointer,1,indirect_ptr_array);
+                //how much space is left in indirect pointer?
+                for(int i = 0; i < BLOCK_SIZE/sizeof(int);i++)
+                {
+                    if(indirect_ptr_array[i] == NOT_INUSE){
+                        first_indirect = i;
+                        break;
+                    }
 
-				}
-				if(first_indirect == -1)
-					return FILE_ERR3;//no space in indirect pointer
-			}
-			//Check if there is enough space
-			//to write the file
-			if(indirect_needed >(int)(BLOCK_SIZE/sizeof(int)))
-				return FILE_ERR3;//not enough space to write
-			//Now assign blocks
-            //printf("        Number of blocks needed %d \n", num_blocks_needed);
-            //printf("        First direct pointer %d \n", first_ptr_index);
-            //printf("        Indirect Needed %d \n", indirect_needed);
-			for(int i = 0; i < num_blocks_needed; i++)
-			{
-				if(i + first_ptr_index < 12)
-				{
-					//direct block assignment
-					node->data_ptrs[i+first_ptr_index] = fill_block();
-					if(node->data_ptrs[i+first_ptr_index] == 0)
-						release_flag = i;
-				}
-				else
-				{
-					//indirect block assignment
-                    int index = i - (12-first_ptr_index)+first_indirect;
-                    //printf("        Assigning indirect pointers at index %d .......\n",index);
-					indirect_ptr_array[index] = fill_block();
-					if(indirect_ptr_array[i] == 1)
-						release_flag = i;
-				}
-			}
-			if(release_flag > 0)
-			{
-				//blocks need to be released, something went wrong will filling them
-				for(int i = release_flag - 1; i >= 0; i--)
-				{
-					if(i + first_ptr_index < 12)
-					{
-						empty_block(node->data_ptrs[i+first_ptr_index]);
-					}
-					else
-						empty_block(indirect_ptr_array[i-(12-first_ptr_index)]);
-				}
-				return FILE_ERR3;
+                }
 
-			}
-			//save the inode table with indirect pointers etc
-			if(indirect_needed > 0)
-				write_blocks(node->indirectPointer,1,&indirect_ptr_array);
-			//jnode->size+=(BLOCK_SIZE*num_blocks_needed);
-            //printf("Writing inode array the root numbers are %d %d \n", inode_array[0].data_ptrs[8],inode_array[0].data_ptrs[10]);
-			write_blocks(1,inode_blocks,&inode_array);
-		}
+            }
+            if(first_indirect == -1)
+                return FILE_ERR3;//no space in indirect pointer
+        }
+        //Check if there is enough space
+        //to write the file
+        if(indirect_needed >(int)(BLOCK_SIZE/sizeof(int)))
+            return FILE_ERR3;//not enough space to write
+        //Now assign blocks
+        // in the free bit map
+        for(int i = 0; i < num_blocks_needed; i++)
+        {
+            if(i + first_ptr_index < 12)
+            {
+                //direct block assignment
+                node->data_ptrs[i+first_ptr_index] = fill_block();
+                if(node->data_ptrs[i+first_ptr_index] == 0)
+                    release_flag = i;
+            }
+            else
+            {
+                //indirect block assignment
+                int index = i - (12-first_ptr_index)+first_indirect;
+                indirect_ptr_array[index] = fill_block();
+                if(indirect_ptr_array[i] == 1)
+                    release_flag = i;
+            }
+        }
+        // Blocks need to be released
+        if(release_flag > 0)
+        {
+            //blocks need to be released, something went wrong will filling them
+            for(int i = release_flag - 1; i >= 0; i--)
+            {
+                if(i + first_ptr_index < 12)
+                {
+                    empty_block(node->data_ptrs[i+first_ptr_index]);
+                }
+                else
+                    empty_block(indirect_ptr_array[i-(12-first_ptr_index)]);
+            }
+            return FILE_ERR3;
 
-		// all blocks assigned and enough space, so now write the blocks
-		int total_written =0;
-		char write_array[BLOCK_SIZE];
-		int which_block;
-		int where_in_block = -1;
-		int i = thisfildes->rwptr/BLOCK_SIZE;
-		int i_0 = i;//to save
-        //printf("   writing blocks (rwptr=%ld)\n", thisfildes->rwptr);
-		int temp_read[BLOCK_SIZE];
-		while(length > 0)
-		{
-			//find the block
-			if(i<12)
-			{
-				which_block = node->data_ptrs[i];
-			}
-			else{
-				read_blocks(node->indirectPointer,1,temp_read);
-				which_block = temp_read[i - 12];
-			}
-            //printf("   which block: %d\n", which_block);
-			if(i == i_0)
-			{
-				where_in_block = thisfildes->rwptr - NUM_BLOCKS*(thisfildes->rwptr/BLOCK_SIZE);
-				read_blocks(which_block,1,write_array);
-			}
-			else
-				where_in_block = 0; //at the start
-			memcpy(write_array+where_in_block,buf+total_written,BLOCK_SIZE-where_in_block);
-			write_blocks(which_block,1,&write_array);
-            //printf(write_array);
-			if(length - (BLOCK_SIZE - where_in_block) < 0)
-			{ 
-				where_in_block = BLOCK_SIZE - length;
-			}
-            //if(length < BLOCK_SIZE - where_in_block)
-             //   thisfildes->rwptr += length;
-            //else
-		    thisfildes->rwptr +=BLOCK_SIZE - where_in_block;
-			total_written += BLOCK_SIZE - where_in_block;
-			length -= BLOCK_SIZE - where_in_block;
-            //the amount written depends on where rwptr is and 
-            //how much is written, so update size properly
-            //int size_increase;
-            if(thisfildes->rwptr > node->size)
-               node->size = thisfildes->rwptr;
-           // else
-            //    size_increase = 
-		    //node->size += BLOCK_SIZE - where_in_block;	
-			i++;
-		}
-        //printf("Writing inode array the root numbers are %d %d \n", inode_array[0].data_ptrs[8],inode_array[0].data_ptrs[10]);
-		write_blocks(1,inode_blocks,&inode_array);
-		return total_written;
+        }
+        //save the inode table with indirect pointers etc
+        if(indirect_needed > 0)
+            write_blocks(node->indirectPointer,1,&indirect_ptr_array);
+        write_blocks(1,inode_blocks,&inode_array);
+    }
 
+    // ********* WRITE BLOCK REGION ****************
+    int total_written =0;
+    char write_array[BLOCK_SIZE];
+    int which_block;
+    int where_in_block = -1;
+    int i = thisfildes->rwptr/BLOCK_SIZE;
+    // save the first block valie
+    int i_0 = i;
+    
+    int temp_read[BLOCK_SIZE];
+    // Read the data (same algorithm as fread)
+    while(length > 0)
+    {
+        //find the block
+        if(i<12)
+        {
+            which_block = node->data_ptrs[i];
+        }
+        else{
+            read_blocks(node->indirectPointer,1,temp_read);
+            which_block = temp_read[i - 12];
+        }
+        // For the first block, find the position in the block 
+        // Otherwise start writing at beginning of block
+        // For first block, also read the current block
+        // So it is not overwritten
+        if(i == i_0)
+        {
+            where_in_block = thisfildes->rwptr - NUM_BLOCKS*(thisfildes->rwptr/BLOCK_SIZE);
+            read_blocks(which_block,1,write_array);
+        }
+        else
+            where_in_block = 0; //at the start
+        // Copy to write array
+        memcpy(write_array+where_in_block,buf+total_written,BLOCK_SIZE-where_in_block);
+        // Write the block
+        // Update all variables
+        write_blocks(which_block,1,&write_array);
+        // Update the length, and factor in whether it is smaller than end of block
+        if(length - (BLOCK_SIZE - where_in_block) < 0)
+        { 
+            where_in_block = BLOCK_SIZE - length;
+        }
+        thisfildes->rwptr +=BLOCK_SIZE - where_in_block;
+        total_written += BLOCK_SIZE - where_in_block;
+        length -= BLOCK_SIZE - where_in_block;
+        if(thisfildes->rwptr > node->size)
+           node->size = thisfildes->rwptr;
+        i++;
+    }
+    //update inode array
+    write_blocks(1,inode_blocks,&inode_array);
+    return total_written;
 
-	}
-	else
-		return check_fid;
 }
 
 int sfs_fseek(int fileID, int loc) {
