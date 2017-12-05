@@ -813,7 +813,7 @@ int sfs_remove(char *file) {
     printf("Temp\n");
 	for(int i = filenum; i < NUM_FILES; i++)
 	{
-		if(root[filenum].num == INIT_INODE_VAL)
+		if(root[i].num == INIT_INODE_VAL)
 			break;
 		else
 			root[i] = root[i + 1];
