@@ -412,7 +412,8 @@ int sfs_fopen(char *name){
 	fildest.fildes[fileID].inode = &(inode_array[inode_num]);
 	fildest.fildes[fileID].inodeIndex = inode_num;
 	fildest.use[fileID] = IN_USE;
-	fildest.fildes[fileID].rwptr = 0;
+	//fildest.fildes[fileID].rwptr = 0;
+    fildest.fildes[fileID].rwptr = inode_array[inode_num].size;
 	//add the file to root
 	//find the first free root directory element
 
@@ -547,7 +548,13 @@ int sfs_fwrite(int fileID, const char *buf, int length)
 		//first need to assign the blocks before we write to them
 		// make sure all the needed blocks are available to assign
 		//calculate the first block to write to
-        int num_blocks_needed = 1  + (thisfildes->rwptr + length - node->size)/BLOCK_SIZE;//round up on int operations
+        int num_blocks_needed = 1  + (thisfildes->rwptr + length)/BLOCK_SIZE;//round up on int operations
+        int blocks_assigned;
+        if(node->size == 0)
+            blocks_assigned = 0;
+        else
+            blocks_assigned = 1 + (node->size/BLOCK_SIZE);
+        num_blocks_needed -= blocks_assigned;
 
 		if(num_blocks_needed > 0)
 		{
