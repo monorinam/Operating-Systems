@@ -11,7 +11,7 @@
 #define SUCCESS 0
 #define FAILURE 1
 #define MAX_OPTIONS 20 // As defined in the example code given to us
-// Monorina Mukhopadhyay (ID: 260364335)
+
 // This code is given for illustration purposes. You need not include or follow this
 // strictly. Feel free to writer better or bug free code. This example code block does not
 // worry about deallocating memory. You need to ensure memory is allocated and deallocated
