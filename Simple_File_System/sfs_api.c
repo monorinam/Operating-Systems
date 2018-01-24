@@ -6,7 +6,7 @@
 #include <fuse.h>
 #include <strings.h>
 #include "disk_emu.h"
-#define LASTNAME_FIRSTNAME_DISK "MUKHOPADHYAY_MONORINA_DISK.disk"
+#define LASTNAME_FIRSTNAME_DISK "SIMPLEFILESYS_DISK.disk"
 #define BITMAP_ROW_SIZE (NUM_BLOCKS/8) // this essentially mimcs the number of rows we have in the bitmap. we will have 128 rows. 
 
 /* macros */
