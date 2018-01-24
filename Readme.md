@@ -7,3 +7,6 @@ This uses shared memory to update a database without creating any race condition
 ## Simple File System
 This creates a simple file system using a free bit map system with FUSE wrappers.
 
+## Note
+Please do not use these files for homework submissions. 
+
