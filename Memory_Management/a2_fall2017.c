@@ -1,7 +1,5 @@
 /**
-Assignment #2
-COMP 310: Operating Systems
-Name: Monorina Mukhopadhyay (260364335)
+Memory Management Assignment: OS
 */
 
 #include <stdio.h>
