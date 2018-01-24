@@ -1,6 +1,0 @@
-Darwin GhostInTheMachine.local 14.5.0 Darwin Kernel Version 14.5.0: Sun Jun  4 21:40:08 PDT 2017; root:xnu-2782.70.3~1/RELEASE_X86_64 x86_64
-Wed 27 Sep 2017 20:18:02 EDT
-Monorina console  Sep 26 14:40 
-Monorina ttys000  Sep 26 15:45 
-Monorina ttys001  Sep 26 16:15 
-Monorina ttys002  Sep 27 11:13 
